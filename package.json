@@ -1,5 +1,5 @@
 {
-  "name": "cinestar",
+  "name": "topreview",
   "version": "1.0.0",
   "description": "QR por camarero → reseñas en Google + dashboard en tiempo real",
   "main": "server.js",

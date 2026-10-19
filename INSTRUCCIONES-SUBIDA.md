@@ -2,7 +2,7 @@
 
 **Para:** el agente o la persona que vaya a publicar la app.
 **Proyecto:** TopReview, la app de QR por camarero para POLKA San Sebastián.
-**Archivo:** `cinestar.zip`, con todo el código. No incluye `node_modules` ni la base de datos.
+**Archivo:** `topreview.zip`, con todo el código. No incluye `node_modules` ni la base de datos.
 
 ## Qué es
 
@@ -21,15 +21,15 @@ Necesita un **servidor con disco persistente**. GitHub Pages no sirve, porque ha
 
 1. Crea un repositorio **vacío**, sin README, `.gitignore` ni licencia:
    - Organización: `POLKASanSebastian`
-   - Nombre: `cinestar`
+   - Nombre: `topreview`
    - URL para crearlo: https://github.com/organizations/POLKASanSebastian/repositories/new
-2. Descomprime `cinestar.zip` y, dentro de la carpeta `cinestar`, ejecuta:
+2. Descomprime `topreview.zip` y, dentro de la carpeta `topreview`, ejecuta:
 
 ```bash
 git init -b main
 git add -A
 git commit -m "TopReview: QR por camarero, reseñas en Google y dashboard en tiempo real"
-git remote add origin https://github.com/POLKASanSebastian/cinestar.git
+git remote add origin https://github.com/POLKASanSebastian/topreview.git
 git push -u origin main
 ```
 
@@ -40,9 +40,9 @@ Si no se usa la terminal, en la página del repositorio vacío se puede pulsar *
 ## Paso 2: Publicarlo en Render
 
 1. Entra en https://dashboard.render.com con la cuenta de GitHub de POLKA.
-2. Ve a **New → Blueprint** y elige el repositorio `POLKASanSebastian/cinestar`. Si no aparece, hay que dar acceso a Render a ese repositorio desde el mismo asistente.
+2. Ve a **New → Blueprint** y elige el repositorio `POLKASanSebastian/topreview`. Si no aparece, hay que dar acceso a Render a ese repositorio desde el mismo asistente.
 3. Render lee el archivo `render.yaml` y crea:
-   - El servicio web `cinestar`, con plan Starter, en Frankfurt (unos 7 $/mes).
+   - El servicio web `topreview`, con plan Starter, en Frankfurt (unos 7 $/mes).
    - Un disco persistente de 1 GB en `/var/data`, donde vive la base de datos.
    - Estas variables: `BUSINESS_NAME=POLKA San Sebastián`, el enlace de Google de POLKA y `ADMIN_PASSWORD`, que se genera automáticamente.
 4. Pulsa **Apply** y espera a que el estado quede en **Live** (2–4 minutos).
@@ -53,9 +53,9 @@ Si no se usa la terminal, en la página del repositorio vacío se puede pulsar *
 
 ## Paso 3: Configuración final, antes de imprimir los QR
 
-1. En Render → servicio `cinestar` → **Environment**:
+1. En Render → servicio `topreview` → **Environment**:
    - Copia el valor de `ADMIN_PASSWORD`. Es la contraseña del dashboard; el usuario es `admin`.
-   - Añade `BASE_URL` con la URL pública del servicio, por ejemplo `https://cinestar.onrender.com`. Es la dirección que va dentro de cada QR.
+   - Añade `BASE_URL` con la URL pública del servicio, por ejemplo `https://topreview.onrender.com`. Es la dirección que va dentro de cada QR.
    - Guarda. Render reinicia la app solo.
 2. *(Opcional)* Usa un dominio propio, como `opiniones.polkasansebastian.com`, desde **Settings → Custom Domains**. En ese caso, pon ese dominio en `BASE_URL`.
 3. Entra en `<URL>/admin` y, en **Ajustes**:

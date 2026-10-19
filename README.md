@@ -29,9 +29,9 @@ Requiere Node 22.5+ (usa la base de datos SQLite integrada en Node, sin servicio
 
 | Variable | Para qué |
 |---|---|
-| `ADMIN_PASSWORD` | Contraseña del dashboard (**cámbiala**, por defecto `cinestar`) |
+| `ADMIN_PASSWORD` | Contraseña del dashboard (**cámbiala**, por defecto `topreview`) |
 | `ADMIN_USER` | Usuario del dashboard (por defecto `admin`) |
-| `BASE_URL` | URL pública, p. ej. `https://cinestar.tudominio.es` (es la que va dentro de los QR) |
+| `BASE_URL` | URL pública, p. ej. `https://topreview.tudominio.es` (es la que va dentro de los QR) |
 | `DATA_DIR` | Carpeta de la base de datos (debe ser un disco persistente) |
 | `PORT` | Puerto (por defecto 3000) |
 
@@ -57,6 +57,6 @@ Google Business Profile → «Pedir reseñas» → copia el enlace (`https://g.p
 1. Entra en <https://dashboard.render.com/blueprints> con tu cuenta de GitHub → **New Blueprint Instance** → elige este repositorio.
 2. Render lee `render.yaml` y crea el servicio con disco persistente (plan Starter, unos 7 $/mes).
 3. Al terminar, la contraseña del dashboard está en **Environment → ADMIN_PASSWORD**.
-4. Copia la URL que te da Render (p. ej. `https://cinestar.onrender.com`), añádela como variable `BASE_URL` y entonces imprime los QR.
+4. Copia la URL que te da Render (p. ej. `https://topreview.onrender.com`), añádela como variable `BASE_URL` y entonces imprime los QR.
 
 `BUSINESS_NAME` y `GOOGLE_REVIEW_URL` solo se usan la primera vez; después se cambian desde **Ajustes** en el dashboard.

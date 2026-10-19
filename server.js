@@ -9,12 +9,18 @@ const { DatabaseSync } = require('node:sqlite');
 
 const PORT = process.env.PORT || 3000;
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'cinestar';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'topreview';
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
 // ---------- Base de datos ----------
-const db = new DatabaseSync(path.join(DATA_DIR, 'cinestar.db'));
+// La base de datos se llamaba cinestar.db: si existe, se renombra para no perder datos.
+const DB_FILE = path.join(DATA_DIR, 'topreview.db');
+const OLD_DB_FILE = path.join(DATA_DIR, 'cinestar.db');
+if (!fs.existsSync(DB_FILE) && fs.existsSync(OLD_DB_FILE)) {
+  for (const ext of ['', '-wal', '-shm']) if (fs.existsSync(OLD_DB_FILE + ext)) fs.renameSync(OLD_DB_FILE + ext, DB_FILE + ext);
+}
+const db = new DatabaseSync(DB_FILE);
 db.exec(`
   PRAGMA journal_mode = WAL;
   CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
@@ -345,7 +351,7 @@ app.get('/api/admin/export.csv', (req, res) => {
   const csv = ['Camarero;Escaneos;Valoraciones;5★;4★;3★;2★;1★;Media;Clics Google;Bonus €']
     .concat(rows.map((r) => [r.name, r.scans, r.ratings, r.stars[5], r.stars[4], r.stars[3], r.stars[2], r.stars[1], r.avg ?? '', r.google_clicks, r.bonus.toFixed(2).replace('.', ',')].join(';')))
     .join('\n');
-  res.type('text/csv; charset=utf-8').attachment('cinestar-informe.csv').send('﻿' + csv);
+  res.type('text/csv; charset=utf-8').attachment('topreview-informe.csv').send('﻿' + csv);
 });
 
 // Portada pública para explicar TopReview a los camareros
@@ -414,5 +420,5 @@ function reviewBody(w, s) {
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
-  console.log(`TopReview en http://localhost:${PORT}  (admin: ${ADMIN_USER} / ${ADMIN_PASSWORD === 'cinestar' ? 'cinestar  ← cámbiala con ADMIN_PASSWORD' : '********'})`);
+  console.log(`TopReview en http://localhost:${PORT}  (admin: ${ADMIN_USER} / ${ADMIN_PASSWORD === 'topreview' ? 'topreview  ← cámbiala con ADMIN_PASSWORD' : '********'})`);
 });
