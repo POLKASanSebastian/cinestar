@@ -157,7 +157,7 @@ async function load() {
       <div class="acts">
         <a class="main" href="/admin?v=${v.id}">Abrir dashboard</a>
         <button onclick="resetPass(${v.id})">Nueva contraseña</button>
-        <button onclick="copy('${base}/?local=${encodeURIComponent(v.slug)}', 'Enlace de la web para camareros copiado')">Web camareros</button>
+        <button onclick="copy('${base}/camareros?local=${encodeURIComponent(v.slug)}', 'Enlace de la web para camareros copiado')">Web camareros</button>
         <button onclick="toggle(${v.id}, ${!v.active})">${v.active ? 'Desactivar' : 'Activar'}</button>
       </div>
     </article>`).join('') || '<p class="empty">Aún no hay locales.</p>';
