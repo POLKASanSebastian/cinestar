@@ -214,7 +214,7 @@ app.get('/me/:token', (req, res) => {
 app.get('/qr/:slug.png', async (req, res) => {
   const w = db.prepare('SELECT slug FROM waiters WHERE slug = ?').get(req.params.slug);
   if (!w) return res.sendStatus(404);
-  const buf = await QRCode.toBuffer(`${baseUrl(req)}/r/${w.slug}`, { width: 600, margin: 2, color: { dark: '#111827' } });
+  const buf = await QRCode.toBuffer(`${baseUrl(req)}/r/${w.slug}`, { width: 600, margin: 1, color: { dark: '#0b1f3a' } });
   res.type('png').send(buf);
 });
 
@@ -226,16 +226,69 @@ app.get('/admin/card/:id', (req, res) => {
   const w = db.prepare('SELECT * FROM waiters WHERE id = ?').get(Number(req.params.id));
   if (!w) return res.sendStatus(404);
   const s = getSettings();
-  res.send(page(`QR ${w.name}`, `
-    <div class="card center print">
+  const num = String(w.id).padStart(4, '0');
+  const bulbs = '<i></i>'.repeat(11);
+  res.send(`<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QR ${esc(w.name)} · CineStar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+  /* Tarjeta de mesa A6 (105 × 148 mm), centrada en un A4 con línea de corte. Misma paleta que la web: crema, blanco, azul Klein y azul navío; amarillo solo en estrellas y bombillas. */
+  :root { --cream:#f7f1e3; --navy:#0b1f3a; --klein:#002fa7; --klein-light:#9fb4ee; --star:#f2b705; --muted:#4b5a73; --line:#e3d9c4;
+    --display:"Big Shoulders Display", Impact, "Arial Narrow", sans-serif; --body:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  * { box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  body { margin:0; min-height:100vh; background:var(--cream); font-family:var(--body); color:var(--navy);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; padding:24px 16px; }
+  .cut { padding:5mm; border:1px dashed #b9ae95; border-radius:3mm; background:#fff; }
+  .card { width:105mm; height:148mm; background:var(--cream); border-radius:4mm; overflow:hidden; display:flex; flex-direction:column; position:relative; }
+  .top { background:var(--navy); color:#fff; text-align:center; padding:7mm 6mm 6mm; position:relative; }
+  .bulbs { position:absolute; left:5mm; right:5mm; bottom:-1.6mm; display:flex; justify-content:space-between; }
+  .bulbs i { width:3.2mm; height:3.2mm; border-radius:50%; background:var(--star); box-shadow:0 0 0 .6mm var(--navy); }
+  .brand { font-family:var(--display); font-weight:900; font-size:11mm; line-height:1; letter-spacing:.02em; text-transform:uppercase; }
+  .brand span { color:var(--klein-light); }
+  .now { margin-top:2.4mm; font-size:2.6mm; letter-spacing:.32em; text-transform:uppercase; color:#c9d3e6; font-weight:700; }
+  .body { flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; padding:7mm 7mm 0; }
+  .ask { font-family:var(--display); font-weight:700; font-size:6.2mm; line-height:1; text-transform:uppercase; letter-spacing:.02em; }
+  .name { font-family:var(--display); font-weight:900; font-size:11mm; line-height:.95; text-transform:uppercase; color:var(--klein); margin-top:1mm; text-wrap:balance; max-width:100%; overflow-wrap:anywhere; }
+  .qrbox { margin-top:4.5mm; background:#fff; border:1.2mm solid var(--klein); border-radius:4mm; padding:2.5mm; width:46mm; height:46mm; }
+  .qrbox img { width:100%; height:100%; display:block; }
+  .stars { margin-top:3.5mm; font-size:7mm; letter-spacing:1.4mm; color:var(--star); line-height:1; }
+  .scan { margin-top:2.4mm; font-weight:700; font-size:3.6mm; }
+  .fine { margin-top:.8mm; font-size:2.8mm; color:var(--muted); }
+  .stub { margin-top:auto; border-top:.5mm dashed #b9ae95; display:flex; justify-content:space-between; align-items:center; padding:3mm 6mm 3.5mm;
+    font-family:var(--display); font-weight:700; font-size:3.4mm; letter-spacing:.18em; text-transform:uppercase; color:var(--navy); position:relative; }
+  .stub::before, .stub::after { content:""; position:absolute; top:-2.6mm; width:5mm; height:5mm; border-radius:50%; background:#fff; }
+  .stub::before { left:-2.5mm; } .stub::after { right:-2.5mm; }
+  .stub b { color:var(--klein); }
+  .actions { display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .btn { border:0; border-radius:12px; padding:14px 28px; font:700 16px var(--body); background:var(--klein); color:#fff; cursor:pointer; }
+  .btn:hover { background:#00227a; }
+  .tip { font-size:13px; color:var(--muted); max-width:340px; text-align:center; margin:0; }
+  @page { size:A4; margin:0; }
+  @media print { body { background:#fff; min-height:auto; height:297mm; padding:0; } .actions { display:none; } }
+</style></head><body>
+  <div class="cut"><div class="card">
+    <div class="top">
       <div class="brand">Cine<span>Star</span></div>
-      <p class="muted">${esc(s.business_name)}</p>
-      <h1>¿Te ha atendido bien ${esc(w.name)}?</h1>
-      <img class="qr" src="/qr/${w.slug}.png" alt="QR">
-      <p><b>Escanea y valóralo en 10 segundos</b></p>
-      <div class="stars static">★★★★★</div>
-      <button class="btn noprint" onclick="print()">Imprimir</button>
-    </div>`));
+      <div class="now">Ahora en cartel · ${esc(s.business_name)}</div>
+      <div class="bulbs">${bulbs}</div>
+    </div>
+    <div class="body">
+      <div class="ask">¿Te ha atendido bien</div>
+      <div class="name">${esc(w.name)}?</div>
+      <div class="qrbox"><img src="/qr/${w.slug}.png" alt="QR de ${esc(w.name)}"></div>
+      <div class="stars">★★★★★</div>
+      <div class="scan">Escanea y valóralo en 10 segundos</div>
+      <div class="fine">Sin descargar nada · Solo con la cámara del móvil</div>
+    </div>
+    <div class="stub"><span>Entrada nº <b>${num}</b></span><span>Valoración de sala</span></div>
+  </div></div>
+  <div class="actions">
+    <button class="btn" onclick="print()">Imprimir tarjeta</button>
+    <p class="tip">Tamaño A6, para un portacartas de mesa. En la ventana de impresión elige <b>Color</b> y escala <b>100 %</b>, y recorta por la línea discontinua.</p>
+  </div>
+</body></html>`);
 });
 
 app.get('/api/admin/stream', (req, res) => {
