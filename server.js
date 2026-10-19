@@ -408,7 +408,7 @@ app.get('/me/:token', (req, res) => {
         <div><b>${st.bonus.toFixed(2)} €</b><small>bonus del mes</small></div>
       </div>
       <p class="muted">5★ ${st.stars[5]} · 4★ ${st.stars[4]} · 3★ ${st.stars[3]} · 2★ ${st.stars[2]} · 1★ ${st.stars[1]}</p>
-      <p class="small"><a href="/?local=${esc(vs?.slug || '')}">¿Cómo funciona TopReview?</a></p>
+      <p class="small"><a href="/camareros?local=${esc(vs?.slug || '')}">¿Cómo funciona TopReview?</a></p>
     </div>`));
 });
 
@@ -660,14 +660,16 @@ app.patch('/api/portal/accounts/:id', requireSuper, (req, res) => {
   res.json({ ok: true });
 });
 
-// Portada pública para explicar TopReview a los camareros
-const landing = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
-app.get('/', (req, res) => res.send(`<!doctype html><html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>${landing}</body></html>`));
+// Portada comercial (para dueños de restaurantes)
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
+// Página para camareros: cómo funciona y lo que ganan (con ?local=slug muestra el nombre y los bonus de su local)
+const staffPage = fs.readFileSync(path.join(__dirname, 'public', 'camareros.html'), 'utf8');
+app.get(['/camareros', '/camareros.html'], (req, res) => res.send(`<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>${staffPage}</body></html>`));
 app.get('/api/public/info', (req, res) => {
-  const v = db.prepare('SELECT id FROM venues WHERE slug = ? AND active = 1').get(String(req.query.local || ''))
-    || db.prepare('SELECT id FROM venues WHERE active = 1 ORDER BY id LIMIT 1').get();
-  const s = v ? getSettings(v.id) : DEFAULT_SETTINGS;
+  const v = db.prepare('SELECT id FROM venues WHERE slug = ? AND active = 1').get(String(req.query.local || ''));
+  if (!v) return res.set('Access-Control-Allow-Origin', '*').status(404).json({ error: 'Local no encontrado' });
+  const s = getSettings(v.id);
   res.set('Access-Control-Allow-Origin', '*'); // la web de camareros en GitHub Pages lee estos datos
   res.json({ business_name: s.business_name, bonus_5: s.bonus_5, bonus_4: s.bonus_4, bonus_3: s.bonus_3, bonus_2: s.bonus_2, bonus_1: s.bonus_1 });
 });
@@ -706,7 +708,7 @@ function reviewBody(w, s) {
       const g = hasGoogle ? '<a class="btn google" href="/go/' + slug + '">Escribir reseña en Google</a>' : '';
       if (r.redirect) {
         app.innerHTML = '<div class="brand">Top<span>Review</span></div><div class="big">🎉</div><h1>¡Gracias!</h1>' +
-          '<p>¿Nos ayudas con una reseña en Google? <br><b>Menciona a ' + esc(name) + '</b> 🙌</p>' + g +
+          '<p>¿Nos ayudas contando tu experiencia en Google? 🙌</p>' + g +
           '<p class="muted small">Te llevamos a Google en un momento…</p>';
         setTimeout(() => location.href = '/go/' + slug, 2500);
       } else {
