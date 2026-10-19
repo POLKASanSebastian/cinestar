@@ -179,7 +179,7 @@
       <a href="#ganas">Lo que ganas</a>
       <a href="#consejos">Consejos</a>
       <a href="#faq">Preguntas</a>
-      <a class="cta-s" href="https://cinestar-production.up.railway.app/admin">Acceso encargado</a>
+      <a class="cta-s" href="https://topreview.up.railway.app/admin">Acceso encargado</a>
     </div>
   </div>
 </nav>
@@ -360,11 +360,11 @@
     $('tot').textContent = eur(a * bonus[5] + b * bonus[4]);
   }
   $('c5').oninput = calc; $('c4').oninput = calc;
-  try { const q = qrcode(0, 'M'); q.addData('https://cinestar-production.up.railway.app/r/laura'); q.make(); document.querySelector('.me .qr').innerHTML = q.createImgTag(4, 0); } catch {}
+  try { const q = qrcode(0, 'M'); q.addData('https://topreview.up.railway.app/r/laura'); q.make(); document.querySelector('.me .qr').innerHTML = q.createImgTag(4, 0); } catch {}
   renderRates(); calc();
   $('meBonus').textContent = eur(44 * bonus[5] + 8 * bonus[4]);
 
-  fetch('https://cinestar-production.up.railway.app/api/public/info').then(r => r.ok ? r.json() : null).then(d => {
+  fetch('https://topreview.up.railway.app/api/public/info').then(r => r.ok ? r.json() : null).then(d => {
     if (!d) return;
     bonus = { 5:+d.bonus_5||0, 4:+d.bonus_4||0, 3:+d.bonus_3||0, 2:+d.bonus_2||0, 1:+d.bonus_1||0 };
     document.querySelectorAll('.biz').forEach(el => el.textContent = d.business_name);
