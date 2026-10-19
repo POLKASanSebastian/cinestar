@@ -1,4 +1,4 @@
-// CineStar — QR por camarero → valoración → reseña en Google, con dashboard en tiempo real.
+// TopReview — QR por camarero → valoración → reseña en Google, con dashboard en tiempo real.
 process.removeAllListeners('warning');
 const express = require('express');
 const QRCode = require('qrcode');
@@ -86,7 +86,7 @@ function requireAdmin(req, res, next) {
     const [u, ...p] = Buffer.from(encoded, 'base64').toString().split(':');
     if (u === ADMIN_USER && p.join(':') === ADMIN_PASSWORD) return next();
   }
-  res.set('WWW-Authenticate', 'Basic realm="CineStar"').status(401).send('Acceso restringido');
+  res.set('WWW-Authenticate', 'Basic realm="TopReview"').status(401).send('Acceso restringido');
 }
 
 // Estadísticas por camarero en un rango de fechas (UTC, formato SQLite)
@@ -196,7 +196,7 @@ app.get('/me/:token', (req, res) => {
   const qr = `/qr/${w.slug}.png`;
   res.send(page(`Hola ${w.name}`, `
     <div class="card center">
-      <div class="brand">Cine<span>Star</span></div>
+      <div class="brand">Top<span>Review</span></div>
       <h1>Hola, ${esc(w.name)} 👋</h1>
       <p class="muted">Tu código personal. Enséñalo al cliente al traer la cuenta.</p>
       <img class="qr" src="${qr}" alt="Tu QR">
@@ -206,7 +206,7 @@ app.get('/me/:token', (req, res) => {
         <div><b>${st.bonus.toFixed(2)} €</b><small>bonus del mes</small></div>
       </div>
       <p class="muted">5★ ${st.stars[5]} · 4★ ${st.stars[4]} · 3★ ${st.stars[3]} · 2★ ${st.stars[2]} · 1★ ${st.stars[1]}</p>
-      <p class="small"><a href="/">¿Cómo funciona CineStar?</a></p>
+      <p class="small"><a href="/">¿Cómo funciona TopReview?</a></p>
     </div>`));
 });
 
@@ -230,7 +230,7 @@ app.get('/admin/card/:id', (req, res) => {
   const bulbs = '<i></i>'.repeat(11);
   res.send(`<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QR ${esc(w.name)} · CineStar</title>
+<title>QR ${esc(w.name)} · TopReview</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap">
 <style>
@@ -270,7 +270,7 @@ app.get('/admin/card/:id', (req, res) => {
 </style></head><body>
   <div class="cut"><div class="card">
     <div class="top">
-      <div class="brand">Cine<span>Star</span></div>
+      <div class="brand">Top<span>Review</span></div>
       <div class="now">Ahora en cartel · ${esc(s.business_name)}</div>
       <div class="bulbs">${bulbs}</div>
     </div>
@@ -348,7 +348,7 @@ app.get('/api/admin/export.csv', (req, res) => {
   res.type('text/csv; charset=utf-8').attachment('cinestar-informe.csv').send('﻿' + csv);
 });
 
-// Portada pública para explicar CineStar a los camareros
+// Portada pública para explicar TopReview a los camareros
 const landing = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
 app.get('/', (req, res) => res.send(`<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>${landing}</body></html>`));
@@ -361,14 +361,14 @@ app.get('/api/public/info', (req, res) => {
 // ---------- Plantillas ----------
 function page(title, body) {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · CineStar</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)} · TopReview</title>
 <link rel="stylesheet" href="/static/public.css"></head><body>${body}</body></html>`;
 }
 
 function reviewBody(w, s) {
   return `
   <div class="card center" id="app">
-    <div class="brand">Cine<span>Star</span></div>
+    <div class="brand">Top<span>Review</span></div>
     <p class="muted">${esc(s.business_name)}</p>
     <div class="avatar">${esc(w.name.charAt(0).toUpperCase())}</div>
     <h1>¿Qué tal te ha atendido <br><span class="hl">${esc(w.name)}</span>?</h1>
@@ -391,19 +391,19 @@ function reviewBody(w, s) {
       const r = await fetch('/api/r/' + slug + '/rate', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({stars:n})}).then(r => r.json());
       const g = hasGoogle ? '<a class="btn google" href="/go/' + slug + '">Escribir reseña en Google</a>' : '';
       if (r.redirect) {
-        app.innerHTML = '<div class="brand">Cine<span>Star</span></div><div class="big">🎉</div><h1>¡Gracias!</h1>' +
+        app.innerHTML = '<div class="brand">Top<span>Review</span></div><div class="big">🎉</div><h1>¡Gracias!</h1>' +
           '<p>¿Nos ayudas con una reseña en Google? <br><b>Menciona a ' + esc(name) + '</b> 🙌</p>' + g +
           '<p class="muted small">Te llevamos a Google en un momento…</p>';
         setTimeout(() => location.href = '/go/' + slug, 2500);
       } else {
-        app.innerHTML = '<div class="brand">Cine<span>Star</span></div><h1>Gracias por tu sinceridad</h1>' +
+        app.innerHTML = '<div class="brand">Top<span>Review</span></div><h1>Gracias por tu sinceridad</h1>' +
           '<p>¿Qué podríamos mejorar? Solo lo leerá la dirección.</p>' +
           '<textarea id="c" rows="4" placeholder="Cuéntanos…"></textarea>' +
           '<button class="btn" id="send">Enviar</button>' +
           (g ? '<p class="muted small">También puedes dejar tu opinión pública:</p>' + g.replace('btn google', 'btn ghost') : '');
         document.getElementById('send').onclick = async () => {
           await fetch('/api/r/' + slug + '/comment', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:r.id, comment: document.getElementById('c').value})});
-          app.innerHTML = '<div class="brand">Cine<span>Star</span></div><div class="big">🙏</div><h1>¡Recibido!</h1><p>Gracias por ayudarnos a mejorar.</p>';
+          app.innerHTML = '<div class="brand">Top<span>Review</span></div><div class="big">🙏</div><h1>¡Recibido!</h1><p>Gracias por ayudarnos a mejorar.</p>';
         };
       }
     }
@@ -414,5 +414,5 @@ function reviewBody(w, s) {
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
 app.listen(PORT, () => {
-  console.log(`CineStar en http://localhost:${PORT}  (admin: ${ADMIN_USER} / ${ADMIN_PASSWORD === 'cinestar' ? 'cinestar  ← cámbiala con ADMIN_PASSWORD' : '********'})`);
+  console.log(`TopReview en http://localhost:${PORT}  (admin: ${ADMIN_USER} / ${ADMIN_PASSWORD === 'cinestar' ? 'cinestar  ← cámbiala con ADMIN_PASSWORD' : '********'})`);
 });

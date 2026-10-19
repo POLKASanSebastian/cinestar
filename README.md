@@ -1,4 +1,4 @@
-# CineStar
+# TopReview
 
 Cada camarero tiene su propio QR. El cliente lo escanea, valora la atención con 1–5 estrellas
 y se le lleva a la ficha de **Google Business** para dejar la reseña. El dashboard muestra en
@@ -48,7 +48,7 @@ Google Business Profile → «Pedir reseñas» → copia el enlace (`https://g.p
 
 - **Política de Google**: Google prohíbe filtrar reseñas (pedírselas solo a clientes contentos) y ofrecer
   incentivos *al cliente* por reseñar. Por eso todos los clientes tienen acceso al enlace de Google.
-- **Las estrellas que cuentan para el bonus son las de CineStar**, no las de Google: Google no permite saber
+- **Las estrellas que cuentan para el bonus son las de TopReview**, no las de Google: Google no permite saber
   qué camarero originó cada reseña. «Enviados a Google» cuenta clics, no reseñas publicadas.
 - **Antifraude básico**: un voto por dispositivo y camarero cada 12 h (si repite, se actualiza en vez de sumar).
 

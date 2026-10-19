@@ -1,14 +1,14 @@
-# CineStar: instrucciones para subirlo y ponerlo en marcha
+# TopReview: instrucciones para subirlo y ponerlo en marcha
 
 **Para:** el agente o la persona que vaya a publicar la app.
-**Proyecto:** CineStar, la app de QR por camarero para POLKA San Sebastián.
+**Proyecto:** TopReview, la app de QR por camarero para POLKA San Sebastián.
 **Archivo:** `cinestar.zip`, con todo el código. No incluye `node_modules` ni la base de datos.
 
 ## Qué es
 
 Es una app web en Node.js (Express + SQLite integrado en Node 22):
 
-- `/` es la web que explica CineStar a los camareros.
+- `/` es la web que explica TopReview a los camareros.
 - `/admin` es el dashboard del encargado, con usuario y contraseña.
 - `/r/<camarero>` es la página que abre el cliente al escanear el QR. El cliente valora con estrellas y después va a Google.
 - `/me/<token>` es el panel privado de cada camarero.
@@ -28,7 +28,7 @@ Necesita un **servidor con disco persistente**. GitHub Pages no sirve, porque ha
 ```bash
 git init -b main
 git add -A
-git commit -m "CineStar: QR por camarero, reseñas en Google y dashboard en tiempo real"
+git commit -m "TopReview: QR por camarero, reseñas en Google y dashboard en tiempo real"
 git remote add origin https://github.com/POLKASanSebastian/cinestar.git
 git push -u origin main
 ```
@@ -67,7 +67,7 @@ Si no se usa la terminal, en la página del repositorio vacío se puede pulsar *
 
 ## Comprobación final
 
-- [ ] `<URL>/` muestra la web de CineStar con «POLKA San Sebastián».
+- [ ] `<URL>/` muestra la web de TopReview con «POLKA San Sebastián».
 - [ ] `<URL>/admin` pide usuario y contraseña y abre el dashboard.
 - [ ] Al escanear con un móvil el QR de un camarero de prueba se abre «¿Qué tal te ha atendido…?».
 - [ ] Al votar 5★, el dashboard lo muestra **al momento** y el móvil va a Google.
