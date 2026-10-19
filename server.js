@@ -50,7 +50,7 @@ db.exec(`
 `);
 
 // ---------- Locales (multi-establecimiento) ----------
-// Cada local tiene su propio acceso, ficha de Google, bonus y camareros. El acceso maestro (ADMIN_USER/ADMIN_PASSWORD) los gestiona todos.
+// Cada local tiene su propio acceso, ficha de Google, bonus y camareros, y pertenece a un portal.
 db.exec(`
   CREATE TABLE IF NOT EXISTS venues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,6 +63,21 @@ db.exec(`
   );
   CREATE TABLE IF NOT EXISTS venue_settings (venue_id INTEGER NOT NULL, key TEXT NOT NULL, value TEXT, PRIMARY KEY (venue_id, key));
 `);
+// Portales: cada portal (cuenta) tiene sus propios locales. El portal principal (usuario ADMIN_USER) además da de alta otros portales.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    login TEXT UNIQUE NOT NULL,
+    pass_hash TEXT NOT NULL DEFAULT '',
+    is_super INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+if (!db.prepare('PRAGMA table_info(venues)').all().some((c) => c.name === 'account_id')) {
+  db.exec('ALTER TABLE venues ADD COLUMN account_id INTEGER REFERENCES accounts(id)');
+}
 if (!db.prepare('PRAGMA table_info(waiters)').all().some((c) => c.name === 'venue_id')) {
   db.exec('ALTER TABLE waiters ADD COLUMN venue_id INTEGER REFERENCES venues(id)');
 }
@@ -84,17 +99,26 @@ const checkPass = (pw, stored) => {
 };
 const newPassword = () => Array.from(crypto.randomBytes(10), (x) => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 31]).join('');
 
+const loginTaken = (v) => v === ADMIN_USER || !!db.prepare('SELECT 1 FROM venues WHERE login = ?').get(v) || !!db.prepare('SELECT 1 FROM accounts WHERE login = ?').get(v);
 function uniqueValue(table, col, base) {
-  let v = base, i = 1;
-  while (db.prepare(`SELECT 1 FROM ${table} WHERE ${col} = ?`).get(v) || (col === 'login' && v === ADMIN_USER)) v = `${base}-${++i}`;
+  let v = base || 'local', i = 1;
+  const taken = (x) => (col === 'login' ? loginTaken(x) : !!db.prepare(`SELECT 1 FROM ${table} WHERE ${col} = ?`).get(x));
+  while (taken(v)) v = `${base}-${++i}`;
   return v;
 }
 
-function createVenue(name, { login, google_review_url } = {}) {
+function createAccount(name, login) {
+  const lg = uniqueValue('accounts', 'login', slugify(login || name.split(/\s+/)[0]));
+  const password = newPassword();
+  const r = db.prepare('INSERT INTO accounts (name, login, pass_hash) VALUES (?, ?, ?)').run(name, lg, hashPass(password));
+  return { id: Number(r.lastInsertRowid), name, login: lg, password };
+}
+
+function createVenue(name, { login, google_review_url, accountId } = {}) {
   const slug = uniqueValue('venues', 'slug', slugify(name));
   const lg = uniqueValue('venues', 'login', slugify(login || name.split(/\s+/)[0]));
   const password = newPassword();
-  const r = db.prepare('INSERT INTO venues (name, slug, login, pass_hash) VALUES (?, ?, ?, ?)').run(name, slug, lg, hashPass(password));
+  const r = db.prepare('INSERT INTO venues (name, slug, login, pass_hash, account_id) VALUES (?, ?, ?, ?, ?)').run(name, slug, lg, hashPass(password), accountId ?? SUPER_ID);
   const id = Number(r.lastInsertRowid);
   setSettings(id, { ...DEFAULT_SETTINGS, business_name: name, google_review_url: google_review_url || '' });
   return { id, name, slug, login: lg, password };
@@ -110,6 +134,14 @@ function setSettings(venueId, values) {
   if (values?.business_name) db.prepare('UPDATE venues SET name = ? WHERE id = ?').run(String(values.business_name).trim(), venueId);
 }
 
+// Portal principal: entra con ADMIN_USER / ADMIN_PASSWORD (variables de entorno).
+if (!db.prepare('SELECT 1 FROM accounts WHERE is_super = 1').get()) {
+  db.prepare('INSERT INTO accounts (name, login, is_super) VALUES (?, ?, 1)').run(process.env.PORTAL_NAME || 'Mi portal', ADMIN_USER);
+}
+const SUPER_ID = db.prepare('SELECT id FROM accounts WHERE is_super = 1').get().id;
+db.prepare('UPDATE accounts SET login = ? WHERE id = ?').run(ADMIN_USER, SUPER_ID);
+db.prepare('UPDATE venues SET account_id = ? WHERE account_id IS NULL').run(SUPER_ID);
+
 // Migración: la instalación de un solo local pasa a ser el primer local (POLKA), con sus ajustes y camareros.
 if (!db.prepare('SELECT COUNT(*) AS n FROM venues').get().n) {
   const old = Object.fromEntries(db.prepare('SELECT key, value FROM settings').all().map((r) => [r.key, r.value]));
@@ -117,7 +149,7 @@ if (!db.prepare('SELECT COUNT(*) AS n FROM venues').get().n) {
   const v = createVenue(name, { google_review_url: old.google_review_url || process.env.GOOGLE_REVIEW_URL || '' });
   setSettings(v.id, { ...old, business_name: name });
   db.prepare('UPDATE waiters SET venue_id = ? WHERE venue_id IS NULL').run(v.id);
-  console.log(`Local inicial creado: ${name} (usuario ${v.login}). Su contraseña se genera desde el panel maestro.`);
+  console.log(`Local inicial creado: ${name} (usuario ${v.login}). Su contraseña se genera desde tu portal.`);
 }
 db.prepare('UPDATE waiters SET venue_id = (SELECT MIN(id) FROM venues) WHERE venue_id IS NULL').run();
 
@@ -148,34 +180,111 @@ function addEvent(waiterId, type, extra = {}) {
   return Number(r.lastInsertRowid);
 }
 
-// Acceso: usuario maestro (todos los locales) o usuario de un local (solo el suyo)
+// ---------- Acceso con sesión (pantalla de login propia) ----------
+// Tipos de sesión: 'account' (dueño de un portal: ve y gestiona sus locales) y 'venue' (encargado: solo su local).
+const SECRET = (() => {
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'session_secret'").get();
+  if (row) return row.value;
+  const v = crypto.randomBytes(32).toString('hex');
+  db.prepare("INSERT INTO settings (key, value) VALUES ('session_secret', ?)").run(v);
+  return v;
+})();
+const COOKIE = 'tr_s';
+const SESSION_DAYS = 30;
+const sign = (data) => crypto.createHmac('sha256', SECRET).update(data).digest('base64url');
+// La "versión" cambia al cambiar la contraseña, así las sesiones abiertas con la antigua dejan de valer.
+const superVer = () => crypto.createHash('sha256').update(ADMIN_PASSWORD).digest('hex').slice(0, 12);
+const verOf = (row, isSuper) => (isSuper ? superVer() : String(row.pass_hash).slice(-12));
+
+function makeSession(kind, id, ver) {
+  const data = Buffer.from(JSON.stringify({ k: kind, id, ver, exp: Date.now() + SESSION_DAYS * 864e5 })).toString('base64url');
+  return data + '.' + sign(data);
+}
+function readCookie(req, name) {
+  const m = new RegExp('(?:^|;\\s*)' + name + '=([^;]+)').exec(req.headers.cookie || '');
+  return m ? m[1] : null;
+}
 function whoIs(req) {
-  const [scheme, encoded] = (req.headers.authorization || '').split(' ');
-  if (scheme !== 'Basic' || !encoded) return null;
-  const [u, ...p] = Buffer.from(encoded, 'base64').toString().split(':');
-  const pw = p.join(':');
-  if (u === ADMIN_USER && pw === ADMIN_PASSWORD) return { role: 'master' };
-  const v = db.prepare('SELECT id, pass_hash FROM venues WHERE login = ? AND active = 1').get(u);
-  if (v && checkPass(pw, v.pass_hash)) return { role: 'venue', venueId: v.id };
+  const tok = readCookie(req, COOKIE);
+  if (!tok) return null;
+  const [data, mac] = tok.split('.');
+  if (!data || !mac) return null;
+  const good = sign(data);
+  if (good.length !== mac.length || !crypto.timingSafeEqual(Buffer.from(good), Buffer.from(mac))) return null;
+  let p; try { p = JSON.parse(Buffer.from(data, 'base64url').toString()); } catch { return null; }
+  if (!p || p.exp < Date.now()) return null;
+  if (p.k === 'account') {
+    const a = db.prepare('SELECT * FROM accounts WHERE id = ? AND active = 1').get(p.id);
+    if (!a || verOf(a, a.is_super) !== p.ver) return null;
+    return { kind: 'account', accountId: a.id, isSuper: !!a.is_super, name: a.name };
+  }
+  if (p.k === 'venue') {
+    const v = db.prepare(`SELECT v.* FROM venues v JOIN accounts a ON a.id = v.account_id
+      WHERE v.id = ? AND v.active = 1 AND a.active = 1`).get(p.id);
+    if (!v || verOf(v) !== p.ver) return null;
+    return { kind: 'venue', venueId: v.id, accountId: v.account_id };
+  }
   return null;
 }
-const deny = (res) => res.set('WWW-Authenticate', 'Basic realm="TopReview"').status(401).send('Acceso restringido');
+function setSessionCookie(req, res, token) {
+  const secure = req.secure ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `${COOKIE}=${token}; Path=/; Max-Age=${SESSION_DAYS * 86400}; HttpOnly; SameSite=Lax${secure}`);
+}
+const homeFor = (who) => (who.kind === 'account' ? '/portal' : '/admin');
 
-function requireMaster(req, res, next) {
-  const who = whoIs(req);
-  if (!who) return deny(res);
-  if (who.role !== 'master') return res.redirect('/admin');
-  req.who = who; next();
+// Freno a intentos repetidos: 10 fallos por IP cada 15 minutos
+const failures = new Map();
+function tooManyFailures(ip) {
+  const f = failures.get(ip);
+  if (!f || f.until < Date.now()) return false;
+  return f.n >= 10;
+}
+function noteFailure(ip) {
+  const f = failures.get(ip);
+  if (!f || f.until < Date.now()) failures.set(ip, { n: 1, until: Date.now() + 15 * 60e3 });
+  else f.n++;
 }
 
+function checkLogin(user, pw) {
+  user = String(user || '').trim().toLowerCase();
+  pw = String(pw || '');
+  if (!user || !pw) return null;
+  if (user === ADMIN_USER.toLowerCase() && pw === ADMIN_PASSWORD) return makeSession('account', SUPER_ID, superVer());
+  const a = db.prepare('SELECT * FROM accounts WHERE lower(login) = ? AND active = 1 AND is_super = 0').get(user);
+  if (a && checkPass(pw, a.pass_hash)) return makeSession('account', a.id, verOf(a));
+  const v = db.prepare(`SELECT v.* FROM venues v JOIN accounts a ON a.id = v.account_id
+    WHERE lower(v.login) = ? AND v.active = 1 AND a.active = 1`).get(user);
+  if (v && checkPass(pw, v.pass_hash)) return makeSession('venue', v.id, verOf(v));
+  return null;
+}
+
+const isApi = (req) => req.originalUrl.startsWith('/api/');
+function needLogin(req, res) {
+  if (isApi(req)) return res.status(401).json({ error: 'Sesión caducada', login: '/login' });
+  res.redirect('/login?next=' + encodeURIComponent(req.originalUrl));
+}
+
+// Portal: solo el dueño del portal
+function requireAccount(req, res, next) {
+  const who = whoIs(req);
+  if (!who) return needLogin(req, res);
+  if (who.kind !== 'account') return isApi(req) ? res.status(403).json({ error: 'Sin permiso' }) : res.redirect('/admin');
+  req.who = who; next();
+}
+function requireSuper(req, res, next) {
+  if (!req.who?.isSuper) return res.status(403).json({ error: 'Sin permiso' });
+  next();
+}
+
+// Dashboard de un local: el encargado (su local) o el dueño del portal (cualquiera de sus locales, con ?v=)
 function requireVenue(req, res, next) {
   const who = whoIs(req);
-  if (!who) return deny(res);
+  if (!who) return needLogin(req, res);
   req.who = who;
-  if (who.role === 'venue') { req.venueId = who.venueId; return next(); }
-  const v = db.prepare('SELECT id FROM venues WHERE id = ?').get(Number(req.query.v));
+  if (who.kind === 'venue') { req.venueId = who.venueId; return next(); }
+  const v = db.prepare('SELECT id FROM venues WHERE id = ? AND account_id = ?').get(Number(req.query.v), who.accountId);
   if (v) { req.venueId = v.id; return next(); }
-  if (req.path === '/' || req.originalUrl.startsWith('/admin?') || req.originalUrl === '/admin') return res.redirect('/master');
+  if (!isApi(req)) return res.redirect('/portal');
   res.status(400).json({ error: 'Falta el local (?v=)' });
 }
 
@@ -233,7 +342,7 @@ app.use(express.json());
 
 // ---- Página pública del cliente (lo que abre el QR) ----
 app.get('/r/:slug', (req, res) => {
-  const w = db.prepare("SELECT w.* FROM waiters w JOIN venues v ON v.id = w.venue_id WHERE w.slug = ? AND w.active = 1 AND v.active = 1").get(req.params.slug);
+  const w = db.prepare("SELECT w.* FROM waiters w JOIN venues v ON v.id = w.venue_id JOIN accounts a ON a.id = v.account_id WHERE w.slug = ? AND w.active = 1 AND v.active = 1 AND a.active = 1").get(req.params.slug);
   if (!w) return res.status(404).send(page('No encontrado', '<p class="center">Este código ya no está activo.</p>'));
   const visitor = visitorId(req, res);
   addEvent(w.id, 'scan', { visitor });
@@ -242,7 +351,7 @@ app.get('/r/:slug', (req, res) => {
 });
 
 app.post('/api/r/:slug/rate', (req, res) => {
-  const w = db.prepare("SELECT w.* FROM waiters w JOIN venues v ON v.id = w.venue_id WHERE w.slug = ? AND w.active = 1 AND v.active = 1").get(req.params.slug);
+  const w = db.prepare("SELECT w.* FROM waiters w JOIN venues v ON v.id = w.venue_id JOIN accounts a ON a.id = v.account_id WHERE w.slug = ? AND w.active = 1 AND v.active = 1 AND a.active = 1").get(req.params.slug);
   const stars = Math.round(Number(req.body?.stars));
   if (!w || !(stars >= 1 && stars <= 5)) return res.status(400).json({ error: 'Datos no válidos' });
   const visitor = visitorId(req, res);
@@ -406,7 +515,7 @@ app.get('/api/admin/stats', (req, res) => {
     WHERE w.venue_id = ? AND e.type = 'rating' AND e.created_at >= ? AND e.created_at < ?
     GROUP BY day ORDER BY day`).all(req.venueId, from, to);
   const venue = db.prepare('SELECT id, name, slug, login FROM venues WHERE id = ?').get(req.venueId);
-  res.json({ from, to, settings: getSettings(req.venueId), waiters, feed, daily, base: baseUrl(req), venue, master: req.who.role === 'master' });
+  res.json({ from, to, settings: getSettings(req.venueId), waiters, feed, daily, base: baseUrl(req), venue, fromPortal: req.who.kind === 'account' });
 });
 
 app.post('/api/admin/waiters', (req, res) => {
@@ -446,45 +555,108 @@ app.get('/api/admin/export.csv', (req, res) => {
 });
 
 
-// ---- Panel maestro: alta y gestión de locales ----
-app.use(['/master', '/api/master'], requireMaster);
-app.get('/master', (req, res) => res.sendFile(path.join(__dirname, 'public', 'master.html')));
+// ---- Login ----
+app.use(express.urlencoded({ extended: false }));
+app.get('/login', (req, res) => {
+  const who = whoIs(req);
+  if (who) return res.redirect(homeFor(who));
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+app.post('/login', (req, res) => {
+  const ip = req.ip;
+  const next = String(req.body?.next || '');
+  const back = (err) => res.redirect('/login?e=' + err + (next ? '&next=' + encodeURIComponent(next) : ''));
+  if (tooManyFailures(ip)) return back('espera');
+  const token = checkLogin(req.body?.user, req.body?.password);
+  if (!token) { noteFailure(ip); return back('datos'); }
+  failures.delete(ip);
+  setSessionCookie(req, res, token);
+  req.headers.cookie = `${COOKIE}=${token}`;
+  const who = whoIs(req);
+  const safeNext = /^\/(admin|portal)(\/|\?|$)/.test(next) ? next : homeFor(who);
+  res.redirect(safeNext);
+});
+app.get('/logout', (req, res) => {
+  res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`);
+  res.redirect('/login');
+});
+app.get('/master', (req, res) => res.redirect('/portal'));
 
-app.get('/api/master/venues', (req, res) => {
-  const [from, to] = rangeFromQuery({ period: 'month' });
-  const venues = db.prepare('SELECT id, name, slug, login, active, created_at FROM venues ORDER BY active DESC, id').all().map((v) => {
-    const st = computeStats(v.id, from, to);
-    const ratings = st.reduce((a, x) => a + x.ratings, 0);
-    const stars = st.reduce((a, x) => a + [1, 2, 3, 4, 5].reduce((b, n) => b + n * x.stars[n], 0), 0);
-    const s = getSettings(v.id);
-    return { ...v, active: !!v.active, waiters: st.filter((x) => x.active).length, ratings,
-      avg: ratings ? Math.round((stars / ratings) * 100) / 100 : null,
-      google_clicks: st.reduce((a, x) => a + x.google_clicks, 0),
-      bonus: Math.round(st.reduce((a, x) => a + x.bonus, 0) * 100) / 100,
-      has_google: !!s.google_review_url };
-  });
-  res.json({ venues, base: baseUrl(req) });
+// ---- Portal: los locales de cada dueño ----
+app.use(['/portal', '/api/portal'], requireAccount);
+app.get('/portal', (req, res) => res.sendFile(path.join(__dirname, 'public', 'portal.html')));
+
+app.get('/api/portal/me', (req, res) => {
+  const a = db.prepare('SELECT id, name, login, is_super FROM accounts WHERE id = ?').get(req.who.accountId);
+  res.json({ ...a, is_super: !!a.is_super, base: baseUrl(req) });
+});
+app.patch('/api/portal/me', (req, res) => {
+  const name = String(req.body?.name || '').trim().slice(0, 80);
+  if (name) db.prepare('UPDATE accounts SET name = ? WHERE id = ?').run(name, req.who.accountId);
+  res.json({ ok: true });
 });
 
-app.post('/api/master/venues', (req, res) => {
+app.get('/api/portal/venues', (req, res) => {
+  const [from, to] = rangeFromQuery({ period: 'month' });
+  const venues = db.prepare('SELECT id, name, slug, login, active, created_at FROM venues WHERE account_id = ? ORDER BY active DESC, id')
+    .all(req.who.accountId).map((v) => {
+      const st = computeStats(v.id, from, to);
+      const ratings = st.reduce((a, x) => a + x.ratings, 0);
+      const stars = st.reduce((a, x) => a + [1, 2, 3, 4, 5].reduce((b, n) => b + n * x.stars[n], 0), 0);
+      return { ...v, active: !!v.active, waiters: st.filter((x) => x.active).length, ratings,
+        avg: ratings ? Math.round((stars / ratings) * 100) / 100 : null,
+        google_clicks: st.reduce((a, x) => a + x.google_clicks, 0),
+        bonus: Math.round(st.reduce((a, x) => a + x.bonus, 0) * 100) / 100,
+        has_google: !!getSettings(v.id).google_review_url };
+    });
+  res.json({ venues, base: baseUrl(req) });
+});
+app.post('/api/portal/venues', (req, res) => {
   const name = String(req.body?.name || '').trim().slice(0, 80);
   if (!name) return res.status(400).json({ error: 'Nombre obligatorio' });
   const login = String(req.body?.login || '').trim().slice(0, 40);
   const google = String(req.body?.google_review_url || '').trim().slice(0, 500);
-  res.json(createVenue(name, { login, google_review_url: google }));
+  res.json(createVenue(name, { login, google_review_url: google, accountId: req.who.accountId }));
 });
-
-app.post('/api/master/venues/:id/password', (req, res) => {
-  const v = db.prepare('SELECT id, login FROM venues WHERE id = ?').get(Number(req.params.id));
+const ownVenue = (req) => db.prepare('SELECT id, login FROM venues WHERE id = ? AND account_id = ?').get(Number(req.params.id), req.who.accountId);
+app.post('/api/portal/venues/:id/password', (req, res) => {
+  const v = ownVenue(req);
   if (!v) return res.sendStatus(404);
   const password = newPassword();
   db.prepare('UPDATE venues SET pass_hash = ? WHERE id = ?').run(hashPass(password), v.id);
   res.json({ login: v.login, password });
 });
+app.patch('/api/portal/venues/:id', (req, res) => {
+  const v = ownVenue(req);
+  if (!v) return res.sendStatus(404);
+  if (req.body?.active !== undefined) db.prepare('UPDATE venues SET active = ? WHERE id = ?').run(req.body.active ? 1 : 0, v.id);
+  res.json({ ok: true });
+});
 
-app.patch('/api/master/venues/:id', (req, res) => {
-  const id = Number(req.params.id);
-  if (req.body?.active !== undefined) db.prepare('UPDATE venues SET active = ? WHERE id = ?').run(req.body.active ? 1 : 0, id);
+// ---- Otros portales (solo el portal principal): alta, contraseña y corte de acceso. No muestra sus datos. ----
+app.get('/api/portal/accounts', requireSuper, (req, res) => {
+  const rows = db.prepare(`SELECT a.id, a.name, a.login, a.active, a.created_at,
+      (SELECT COUNT(*) FROM venues v WHERE v.account_id = a.id AND v.active = 1) AS venues
+    FROM accounts a WHERE a.is_super = 0 ORDER BY a.active DESC, a.id`).all();
+  res.json(rows.map((r) => ({ ...r, active: !!r.active })));
+});
+app.post('/api/portal/accounts', requireSuper, (req, res) => {
+  const name = String(req.body?.name || '').trim().slice(0, 80);
+  if (!name) return res.status(400).json({ error: 'Nombre obligatorio' });
+  res.json(createAccount(name, String(req.body?.login || '').trim().slice(0, 40)));
+});
+const otherAccount = (req) => db.prepare('SELECT id, login FROM accounts WHERE id = ? AND is_super = 0').get(Number(req.params.id));
+app.post('/api/portal/accounts/:id/password', requireSuper, (req, res) => {
+  const a = otherAccount(req);
+  if (!a) return res.sendStatus(404);
+  const password = newPassword();
+  db.prepare('UPDATE accounts SET pass_hash = ? WHERE id = ?').run(hashPass(password), a.id);
+  res.json({ login: a.login, password });
+});
+app.patch('/api/portal/accounts/:id', requireSuper, (req, res) => {
+  const a = otherAccount(req);
+  if (!a) return res.sendStatus(404);
+  if (req.body?.active !== undefined) db.prepare('UPDATE accounts SET active = ? WHERE id = ?').run(req.body.active ? 1 : 0, a.id);
   res.json({ ok: true });
 });
 
