@@ -3,375 +3,417 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>TopReview · POLKA San Sebastián</title>
+<title>TopReview · Más reseñas de 5 estrellas para tu restaurante</title>
+<meta name="description" content="Cada camarero con su propio QR. El cliente valora en diez segundos, los contentos acaban en tu ficha de Google y tú premias a tu equipo. Hecho en Donostia por hosteleros.">
+<meta property="og:title" content="TopReview · Cada mesa, una estrella en Google">
+<meta property="og:description" content="QR por camarero, quejas en privado y bonus del equipo calculado solo. Para restaurantes y grupos de hostelería.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b1f3a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23002fa7'/%3E%3Cpath d='M32 12l6 13 14 1.5-10.5 9.5 3 14L32 43l-12.5 7 3-14L12 26.5 26 25z' fill='%23f2b705'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&amp;family=DM+Sans:wght@400;500;700&amp;display=swap">
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f7f1e3}section,header{scroll-margin-top:72px}
+a{color:#002fa7}a:hover{color:#00227a}
+.tr-h{font-family:"Big Shoulders Display",Impact,"Arial Narrow",sans-serif;text-transform:uppercase;letter-spacing:.01em;line-height:.95;margin:0;text-wrap:balance;color:#0b1f3a}
+.tr-h em{font-style:normal;color:#002fa7}
+.tr-dark .tr-h{color:#ffffff}
+.tr-dark .tr-h em{color:#f2b705}
+.tr-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;text-decoration:none;font-weight:700;border-radius:12px;padding:0 22px;transition:background .15s,color .15s}
+.tr-btn-p{background:#002fa7;color:#ffffff}
+.tr-btn-p:hover{background:#00227a;color:#ffffff}
+.tr-btn-l{border:1.5px solid #0b1f3a;color:#0b1f3a}
+.tr-btn-l:hover{background:#0b1f3a;color:#ffffff}
+.tr-btn-y{background:#f2b705;color:#0b1f3a}
+.tr-btn-y:hover{background:#ffffff;color:#0b1f3a}
+.tr-nav a.tr-lnk{color:#4b5a73;text-decoration:none}
+.tr-nav a.tr-lnk:hover{color:#002fa7}
+@media (max-width:760px){.tr-nav .tr-lnk{display:none}}
+.tr-bulb{width:10px;height:10px;border-radius:50%;background:#f2b705;box-shadow:0 0 8px 1px #f2b70599;animation:trblink 1.4s infinite}
+.tr-bulb:nth-child(2n){animation-delay:.7s}
+@keyframes trblink{50%{opacity:.35;box-shadow:none}}
+@media (prefers-reduced-motion:reduce){.tr-bulb{animation:none}}
+.tr-ticket{-webkit-mask:radial-gradient(circle 12px at 0 50%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 12px at 100% 50%,transparent 98%,#000) right/51% 100% no-repeat;mask:radial-gradient(circle 12px at 0 50%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 12px at 100% 50%,transparent 98%,#000) right/51% 100% no-repeat}
+.tr-faq details{border-bottom:1px solid #e3d9c4;padding:18px 0}
+.tr-faq details:first-of-type{border-top:1px solid #e3d9c4}
+.tr-faq summary{cursor:pointer;font-weight:700;font-size:18px;list-style:none;display:flex;justify-content:space-between;gap:12px;color:#0b1f3a}
+.tr-faq summary::-webkit-details-marker{display:none}
+.tr-faq summary::after{content:"+";color:#002fa7;font-size:24px;line-height:1;transition:transform .2s}
+.tr-faq details[open] summary::after{transform:rotate(45deg)}
+.tr-faq details p{color:#4b5a73;margin:10px 0 0;max-width:70ch}
+:focus-visible{outline:2px solid #002fa7;outline-offset:3px}
+.tr-in{width:100%;box-sizing:border-box;min-height:48px;border-radius:12px;border:1.5px solid #ffffff40;background:#ffffff14;color:#ffffff;padding:0 14px;font:inherit}
+.tr-in::placeholder{color:#c9d3e6}
+</style>
 </head>
 <body>
-<title>TopReview para camareros</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=DM+Sans:wght@400;500;700&display=swap">
-<style>
-  /* Layout: cartelera de cine en versión luminosa. Fondo crema, tarjetas blancas, azul Klein como acento y azul navío para el texto y el cierre. El amarillo queda solo para las estrellas. */
-  :root {
-    --cream:#f7f1e3; --white:#ffffff; --card:#ffffff; --line:#e3d9c4; --line-soft:#efe7d6;
-    --navy:#0b1f3a; --ink:#0b1f3a; --muted:#4b5a73;
-    --klein:#002fa7; --klein-dark:#00227a; --klein-soft:#002fa712; --klein-tint:#e6ecfa;
-    --star:#f2b705; --star-off:#ddd5c2;
-    --good:#16824a; --bad:#c92a42;
-    --display:"Big Shoulders Display", Impact, "Arial Narrow", sans-serif;
-    --body:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-    color-scheme:light;
-  }
-  * { box-sizing:border-box; }
-  html { scroll-behavior:smooth; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } *, *::before { animation:none !important; transition:none !important; } }
-  body { margin:0; background:var(--cream); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.55; }
-  .wrap { max-width:1100px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
-  h1, h2, h3 { font-family:var(--display); text-transform:uppercase; letter-spacing:.01em; line-height:.95; margin:0; text-wrap:balance; color:var(--navy); }
-  h2 { font-size:clamp(38px, 6vw, 60px); }
-  .eyebrow { font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--klein); font-weight:700; }
-  section { padding-block:72px; }
-  .lede { color:var(--muted); max-width:58ch; font-size:17px; margin:14px 0 0; }
-  a { color:inherit; }
-  :focus-visible { outline:2px solid var(--klein); outline-offset:3px; }
+<div style="font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; color: #0b1f3a; background: #f7f1e3; font-size: 16px; line-height: 1.55">
 
-  /* Navegación */
-  body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top, 0px); z-index:10; background:var(--cream); }
-  nav { position:sticky; top:env(safe-area-inset-top, 0px); z-index:5; background:color-mix(in srgb, var(--cream) 90%, transparent); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
-  nav .wrap { display:flex; align-items:center; gap:18px; padding-block:12px; }
-  .brand { font-family:var(--display); font-weight:900; font-size:28px; text-transform:uppercase; letter-spacing:.02em; text-decoration:none; color:var(--navy); }
-  .brand span { color:var(--klein); }
-  nav .links { display:flex; gap:18px; margin-left:auto; font-size:14px; align-items:center; }
-  nav .links a { text-decoration:none; color:var(--muted); }
-  nav .links a:hover { color:var(--klein); }
-  @media (max-width:720px) { nav .links a:not(.cta-s) { display:none; } }
-  .cta-s { background:var(--klein); color:#fff !important; border-radius:99px; padding:7px 16px; font-weight:700; }
-  .cta-s:hover { background:var(--klein-dark); }
-
-  /* Portada: marquesina */
-  .hero { padding-block:56px 72px; background:radial-gradient(ellipse at 85% -10%, #002fa726 0%, transparent 55%), radial-gradient(ellipse at 0% 110%, #ffffff 0%, transparent 60%); }
-  .hero .wrap { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:40px; align-items:center; }
-  @media (max-width:860px) { .hero .wrap { grid-template-columns:minmax(0,1fr); } }
-  .marquee { position:relative; border:3px solid var(--klein); border-radius:18px; padding:30px 26px 26px; background:var(--white); box-shadow:0 24px 50px -28px #0b1f3a55; }
-  .bulbs { position:absolute; left:10px; right:10px; height:10px; display:flex; justify-content:space-between; }
-  .bulbs.top { top:-6px; } .bulbs.bot { bottom:-6px; }
-  .bulbs i { width:10px; height:10px; border-radius:50%; background:var(--star); box-shadow:0 0 8px 1px #f2b70599; animation:blink 1.4s infinite; }
-  .bulbs i:nth-child(2n) { animation-delay:.7s; }
-  @keyframes blink { 50% { opacity:.4; box-shadow:none; } }
-  .marquee .now { font-size:12px; letter-spacing:.3em; text-transform:uppercase; color:var(--muted); }
-  .hero h1 { font-size:clamp(56px, 10vw, 112px); margin-top:6px; }
-  .hero h1 em { font-style:normal; color:var(--klein); }
-  .hero .lede { font-size:18px; }
-  .btns { display:flex; gap:12px; flex-wrap:wrap; margin-top:26px; }
-  .btn { display:inline-block; text-decoration:none; font-weight:700; border-radius:12px; padding:13px 20px; transition:background .15s, color .15s, border-color .15s; }
-  .btn.gold { background:var(--klein); color:#fff; }
-  .btn.gold:hover { background:var(--klein-dark); }
-  .btn.line { border:1.5px solid var(--navy); color:var(--navy); background:transparent; }
-  .btn.line:hover { background:var(--navy); color:#fff; }
-
-  /* Móvil */
-  .phone { width:100%; max-width:290px; margin:0 auto; border-radius:40px; padding:11px; background:var(--navy); box-shadow:0 30px 60px -20px #0b1f3a66, 0 0 0 6px #0b1f3a0d; }
-  .screen { border-radius:30px; padding:20px 14px; min-height:430px; display:flex; align-items:center; background:radial-gradient(circle at 25% 0%, #3d63d6 0%, var(--klein) 45%, var(--klein-dark) 100%); }
-  .pcard { background:#fff; color:var(--navy); border-radius:20px; padding:20px 12px; width:100%; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; }
-  .pcard .b { font-family:var(--display); font-weight:900; font-size:20px; text-transform:uppercase; } .pcard .b span { color:var(--klein); }
-  .pcard small { color:var(--muted); font-size:12px; }
-  .av { width:56px; height:56px; border-radius:50%; display:grid; place-items:center; color:#fff; font-weight:800; font-size:24px; background:linear-gradient(135deg,var(--klein),var(--navy)); }
-  .pcard p { margin:0; font-weight:700; font-size:18px; line-height:1.2; }
-  .pcard p em { font-style:normal; color:var(--klein); }
-  .pstars { font-size:34px; letter-spacing:2px; color:var(--star-off); }
-  .pstars b { color:var(--star); font-weight:400; animation:pop 3s infinite; display:inline-block; }
-  .pstars b:nth-child(2){animation-delay:.15s}.pstars b:nth-child(3){animation-delay:.3s}.pstars b:nth-child(4){animation-delay:.45s}.pstars b:nth-child(5){animation-delay:.6s}
-  @keyframes pop { 0%,10% { color:var(--star-off); transform:scale(1); } 20%,85% { color:var(--star); transform:scale(1.08); } 100% { color:var(--star-off); } }
-
-  /* Secciones alternas: blanco con tarjetas crema */
-  .steps, .tips, .faq { background:var(--white); --card:var(--cream); }
-
-  /* Pasos como entradas */
-  .tickets { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:18px; margin-top:36px; }
-  @media (max-width:860px) { .tickets { grid-template-columns:minmax(0,1fr); } }
-  .ticket { position:relative; background:var(--card); border-radius:14px; padding:22px; border:1px solid var(--line);
-    -webkit-mask:radial-gradient(circle 12px at 0 50%, transparent 98%, #000) left/51% 100% no-repeat, radial-gradient(circle 12px at 100% 50%, transparent 98%, #000) right/51% 100% no-repeat;
-            mask:radial-gradient(circle 12px at 0 50%, transparent 98%, #000) left/51% 100% no-repeat, radial-gradient(circle 12px at 100% 50%, transparent 98%, #000) right/51% 100% no-repeat; }
-  .ticket .num { font-family:var(--display); font-size:15px; letter-spacing:.2em; color:var(--klein); text-transform:uppercase; border-bottom:2px dashed var(--line); padding-bottom:10px; margin-bottom:14px; display:flex; justify-content:space-between; }
-  .ticket h3 { font-size:30px; }
-  .ticket p { color:var(--muted); margin:10px 0 0; font-size:15px; }
-
-  /* Lo que ganas */
-  .earn .wrap { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:40px; align-items:start; }
-  @media (max-width:860px) { .earn .wrap { grid-template-columns:minmax(0,1fr); } }
-  .rates { margin-top:24px; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--white); }
-  .rate { display:flex; align-items:center; justify-content:space-between; padding:13px 18px; border-bottom:1px solid var(--line-soft); font-variant-numeric:tabular-nums; }
-  .rate:last-child { border-bottom:0; }
-  .rate .s { color:var(--star); letter-spacing:2px; font-size:18px; }
-  .rate .s span { color:var(--star-off); }
-  .rate b { font-family:var(--display); font-size:26px; color:var(--navy); }
-  .rate.top { background:var(--klein-tint); }
-  .rate.top b { color:var(--klein); }
-  .calc { background:var(--white); border:1px solid var(--line); border-radius:18px; padding:24px; box-shadow:0 24px 50px -32px #0b1f3a55; }
-  .calc h3 { font-size:30px; }
-  .calc label { display:block; font-size:14px; color:var(--muted); margin-top:18px; }
-  .calc .val { float:right; color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums; }
-  .calc input[type=range] { width:100%; accent-color:var(--klein); margin-top:8px; }
-  .total { margin-top:22px; padding-top:18px; border-top:2px dashed var(--line); display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-  .total b { font-family:var(--display); font-size:64px; color:var(--klein); line-height:1; font-variant-numeric:tabular-nums; }
-  .fine { font-size:13px; color:var(--muted); margin:12px 0 0; }
-
-  /* Consejos */
-  .say { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px; margin-top:32px; }
-  @media (max-width:860px) { .say { grid-template-columns:minmax(0,1fr); } }
-  .quote { background:var(--card); border-radius:16px; padding:20px; border:1px solid var(--line); border-left:4px solid var(--klein); }
-  .quote .when { font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--klein); font-weight:700; }
-  .quote p { font-size:19px; margin:10px 0 0; line-height:1.4; color:var(--navy); }
-  .dodont { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; margin-top:16px; }
-  @media (max-width:700px) { .dodont { grid-template-columns:minmax(0,1fr); } }
-  .list { border:1px solid var(--line); border-radius:16px; padding:20px 22px; background:var(--card); }
-  .list h3 { font-size:26px; display:flex; align-items:center; gap:10px; }
-  .list ul { margin:12px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px; }
-  .list li { padding-left:26px; position:relative; color:var(--muted); }
-  .list.yes li::before { content:"✓"; position:absolute; left:0; color:var(--good); font-weight:700; }
-  .list.no li::before { content:"✕"; position:absolute; left:0; color:var(--bad); font-weight:700; }
-
-  /* Tu panel */
-  .panel .wrap { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:40px; align-items:center; }
-  @media (max-width:860px) { .panel .wrap { grid-template-columns:minmax(0,1fr); } }
-  .me { background:#fff; color:var(--navy); border-radius:22px; padding:22px; max-width:360px; margin:0 auto; width:100%; text-align:center; border:1px solid var(--line); box-shadow:0 24px 50px -30px #0b1f3a66; }
-  .me .b { font-family:var(--display); font-weight:900; font-size:20px; text-transform:uppercase; } .me .b span { color:var(--klein); }
-  .me h4 { margin:8px 0 2px; font-size:20px; }
-  .me .qr { width:130px; height:130px; margin:12px auto; }
-  .me .qr img { width:100%; height:100%; display:block; image-rendering:pixelated; }
-  .me .g3 { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:10px; }
-  .me .g3 div { background:var(--cream); border-radius:12px; padding:10px 4px; }
-  .me .g3 b { display:block; font-size:18px; font-variant-numeric:tabular-nums; }
-  .me .g3 small { font-size:11px; color:var(--muted); }
-  .feat { margin:20px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:12px; }
-  .feat li { display:flex; gap:12px; align-items:flex-start; color:var(--muted); }
-  .feat li b { color:var(--ink); }
-  .feat .ic { flex:none; width:32px; height:32px; border-radius:10px; display:grid; place-items:center; background:var(--klein-tint); color:var(--klein); font-weight:700; }
-
-  /* FAQ */
-  details { border-bottom:1px solid var(--line); padding-block:16px; }
-  details:first-of-type { border-top:1px solid var(--line); margin-top:28px; }
-  summary { cursor:pointer; font-weight:700; font-size:17px; list-style:none; display:flex; justify-content:space-between; gap:12px; color:var(--navy); }
-  summary::-webkit-details-marker { display:none; }
-  summary::after { content:"+"; color:var(--klein); font-size:22px; line-height:1; transition:transform .2s; }
-  details[open] summary::after { transform:rotate(45deg); }
-  details p { color:var(--muted); margin:10px 0 0; max-width:70ch; }
-
-  /* Cierre: banda azul navío */
-  .end { text-align:center; padding-block:84px; background:radial-gradient(ellipse at 50% 120%, #002fa7 0%, transparent 65%), var(--navy); color:#fff; }
-  .end h2 { font-size:clamp(46px, 8vw, 88px); color:#fff; }
-  .end h2 em { font-style:normal; color:var(--star); }
-  .end .eyebrow { color:#9fb4ee; }
-  .end .lede { margin-inline:auto; color:#c9d3e6; }
-  .end .btns { justify-content:center; }
-  .end .btn.gold { background:#fff; color:var(--navy); }
-  .end .btn.gold:hover { background:var(--cream); }
-  footer { border-top:1px solid var(--line); padding-block:22px; font-size:13px; color:var(--muted); background:var(--cream); }
-  footer .wrap { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-</style>
-
-<nav>
-  <div class="wrap">
-    <a class="brand" href="#top">Top<span>Review</span></a>
-    <div class="links">
-      <a href="#como">Cómo funciona</a>
-      <a href="#ganas">Lo que ganas</a>
-      <a href="#consejos">Consejos</a>
-      <a href="#faq">Preguntas</a>
-      <a class="cta-s" href="https://topreview.up.railway.app/admin">Acceso encargado</a>
-    </div>
-  </div>
+<nav class="tr-nav" style="position: sticky; top: 0; z-index: 5; background: #f7f1e3e6; backdrop-filter: blur(8px); border-bottom: 1px solid #e3d9c4">
+<div style="max-width: 1120px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: nowrap">
+<a href="#inicio" style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 30px; text-transform: uppercase; letter-spacing: .02em; text-decoration: none; color: #0b1f3a">Top<span style="color: #002fa7">Review</span></a>
+<div style="display: flex; gap: 22px; margin-left: auto; align-items: center; font-size: 15px; flex-wrap: wrap">
+<a class="tr-lnk" href="#como-funciona">Cómo funciona</a>
+<a class="tr-lnk" href="#funciones">Funciones</a>
+<a class="tr-lnk" href="#tarifas">Tarifas</a>
+<a class="tr-lnk" href="#preguntas">Preguntas</a>
+<a class="tr-lnk" href="https://topreview.up.railway.app/admin" style="font-weight: 700; color: #0b1f3a">Acceso clientes</a>
+<a class="tr-btn tr-btn-p" href="#demo" style="min-height: 44px; border-radius: 99px; padding: 0 18px">Pide una demo</a>
+</div>
+</div>
 </nav>
 
-<header class="hero" id="top">
-  <div class="wrap">
-    <div class="marquee">
-      <div class="bulbs top"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <div class="now">Ahora en cartel · <span class="biz">POLKA San Sebastián</span></div>
-      <h1>Tú eres<br>la <em>estrella</em></h1>
-      <p class="lede">Tienes tu propio QR. Cuando un cliente te valora con 5 estrellas, cobras un extra. Tu buen servicio por fin se ve y se paga.</p>
-      <div class="btns">
-        <a class="btn gold" href="#como">Cómo funciona</a>
-        <a class="btn line" href="#ganas">Calcula lo que ganas</a>
-      </div>
-      <div class="bulbs bot"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    </div>
-    <div class="phone" aria-label="Lo que ve el cliente al escanear tu QR">
-      <div class="screen">
-        <div class="pcard">
-          <div class="b">Top<span>Review</span></div>
-          <small class="biz">POLKA San Sebastián</small>
-          <div class="av">T</div>
-          <p>¿Qué tal te ha atendido <em>tu nombre</em>?</p>
-          <div class="pstars"><b>★</b><b>★</b><b>★</b><b>★</b><b>★</b></div>
-          <small>Lo que ve el cliente al escanear</small>
-        </div>
-      </div>
-    </div>
-  </div>
+<header id="inicio" style="padding: 64px 20px 80px; background: radial-gradient(ellipse at 85% -10%, #002fa722 0%, transparent 55%)">
+<div style="max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 48px; align-items: center">
+<div style="display: flex; flex-direction: column; gap: 22px">
+<div style="font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #002fa7; font-weight: 700">Reseñas de Google para hostelería</div>
+<h1 class="tr-h" style="font-size: clamp(56px, 8vw, 104px)">Cada mesa, una <em>estrella</em> en Google</h1>
+<p style="margin: 0; color: #4b5a73; font-size: 19px; max-width: 54ch">Cada camarero lleva su propio QR. El cliente valora la atención en diez segundos, sin descargar nada, y los clientes contentos acaban en tu ficha de Google. Tú ves quién lo está haciendo bien, y lo premias.</p>
+<div style="display: flex; gap: 12px; flex-wrap: wrap">
+<a class="tr-btn tr-btn-p" href="#demo">Pide una demo de 15 min</a>
+<a class="tr-btn tr-btn-l" href="#como-funciona">Ver cómo funciona</a>
+</div>
+<div style="display: flex; gap: 10px 22px; flex-wrap: wrap; font-size: 14px; color: #4b5a73">
+<span style="display: flex; gap: 8px; align-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16824a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Sin app para el cliente</span>
+<span style="display: flex; gap: 8px; align-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16824a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Respeta la política de reseñas de Google</span>
+<span style="display: flex; gap: 8px; align-items: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16824a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Bonus del equipo listo para nóminas</span>
+</div>
+</div>
+
+<div style="position: relative; display: flex; justify-content: center; padding: 20px 0">
+<div style="position: relative; width: 100%; max-width: 440px; border: 3px solid #002fa7; border-radius: 22px; background: #ffffff; padding: 34px 28px 30px; box-shadow: 0 30px 60px -30px #0b1f3a66; display: flex; flex-direction: column; align-items: center; gap: 18px">
+<div aria-hidden="true" style="position: absolute; left: 12px; right: 12px; top: -7px; display: flex; justify-content: space-between"><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i></div>
+<div aria-hidden="true" style="position: absolute; left: 12px; right: 12px; bottom: -7px; display: flex; justify-content: space-between"><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i></div>
+<div style="font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: #4b5a73">Ahora en cartel</div>
+<div style="width: 250px; border-radius: 38px; padding: 10px; background: #0b1f3a; box-shadow: 0 24px 50px -20px #0b1f3a88">
+<div style="border-radius: 29px; padding: 22px 14px; min-height: 380px; display: flex; align-items: center; background: radial-gradient(circle at 25% 0%, #3d63d6 0%, #002fa7 45%, #00227a 100%)">
+<div style="background: #ffffff; border-radius: 20px; padding: 20px 12px; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<div style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 18px; text-transform: uppercase">Top<span style="color: #002fa7">Review</span></div>
+<small style="color: #4b5a73; font-size: 12px">POLKA San Sebastián</small>
+<div style="width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; color: #ffffff; font-weight: 700; font-size: 22px; background: #002fa7">L</div>
+<p style="margin: 0; font-weight: 700; font-size: 17px; line-height: 1.2">¿Qué tal te ha atendido <span style="color: #002fa7">Laura</span>?</p>
+<div aria-label="5 estrellas" role="img" style="font-size: 30px; letter-spacing: 2px; color: #f2b705">★★★★★</div>
+<small style="color: #4b5a73; font-size: 12px">Son diez segundos</small>
+</div>
+</div>
+</div>
+</div>
+<div style="position: absolute; left: -8px; bottom: 56px; background: #ffffff; border: 1px solid #e3d9c4; border-radius: 16px; padding: 14px 16px; box-shadow: 0 20px 40px -24px #0b1f3a66; display: flex; gap: 12px; align-items: center">
+<div style="width: 40px; height: 40px; border-radius: 12px; background: #e6ecfa; display: grid; place-items: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#002fa7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"></path><path d="M14 7h7v7"></path></svg></div>
+<div style="display: flex; flex-direction: column; line-height: 1.2"><b style="font-size: 15px">Laura · 4,8 ★</b><small style="color: #4b5a73; font-size: 12px">52 valoraciones este mes</small></div>
+</div>
+</div>
+</div>
 </header>
 
-<section class="steps" id="como">
-  <div class="wrap">
-    <div class="eyebrow">Cómo funciona</div>
-    <h2>Tres pasos, diez segundos</h2>
-    <p class="lede">El cliente no tiene que descargar nada ni registrarse. Escanea, toca las estrellas y listo.</p>
-    <div class="tickets">
-      <article class="ticket">
-        <div class="num"><span>Paso 1</span><span>★</span></div>
-        <h3>Recibes tu QR</h3>
-        <p>El encargado te da de alta y te entrega tu QR personal con tu nombre. Es solo tuyo: todo lo que llegue por él cuenta para ti.</p>
-      </article>
-      <article class="ticket">
-        <div class="num"><span>Paso 2</span><span>★★</span></div>
-        <h3>El cliente te valora</h3>
-        <p>Al traer la cuenta, enseñas tu QR. El cliente lo escanea con la cámara del móvil, te da de 1 a 5 estrellas y pasa a dejar una reseña en Google.</p>
-      </article>
-      <article class="ticket">
-        <div class="num"><span>Paso 3</span><span>★★★</span></div>
-        <h3>Cobras tu bonus</h3>
-        <p>Cada valoración suma a tu bonus del mes. Lo ves en tu panel en tiempo real y se paga con la nómina.</p>
-      </article>
-    </div>
-  </div>
+<section style="background: #0b1f3a; color: #ffffff; padding: 34px 20px">
+<div style="max-width: 1120px; margin: 0 auto; display: flex; gap: 20px 48px; align-items: center; justify-content: space-between; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 4px; max-width: 560px">
+<div style="font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #f2b705; font-weight: 700">Hecho por hosteleros, probado en sala</div>
+<p style="margin: 0; font-size: 18px; color: #e6ecfa">TopReview nació en la barra de POLKA San Sebastián, en la Parte Vieja de Donostia. No lo diseñó una agencia: lo diseñó quien lleva 30 años detrás de una barra.</p>
+</div>
+<div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center">
+<div style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 30px; letter-spacing: .06em; border: 1.5px solid #ffffff55; border-radius: 12px; padding: 8px 18px">POLKA</div>
+<div style="font-size: 13px; color: #c9d3e6; border: 1.5px dashed #ffffff40; border-radius: 12px; padding: 14px 18px">[LOGO CLIENTE]</div>
+<div style="font-size: 13px; color: #c9d3e6; border: 1.5px dashed #ffffff40; border-radius: 12px; padding: 14px 18px">[LOGO CLIENTE]</div>
+</div>
+</div>
 </section>
 
-<section class="earn" id="ganas">
-  <div class="wrap">
-    <div>
-      <div class="eyebrow">Lo que ganas</div>
-      <h2>Cada estrella cuenta</h2>
-      <p class="lede">Esto es lo que suma cada valoración que recibes este mes.</p>
-      <div class="rates" id="rates"></div>
-      <p class="fine">Importes fijados por <span class="biz">POLKA San Sebastián</span>. Pueden cambiar; los vigentes siempre aparecen en tu panel.</p>
-    </div>
-    <div class="calc">
-      <h3>Calcula tu mes</h3>
-      <label for="c5">Valoraciones de 5★ al mes <span class="val" id="v5"></span></label>
-      <input type="range" id="c5" min="0" max="150" value="40">
-      <label for="c4">Valoraciones de 4★ al mes <span class="val" id="v4"></span></label>
-      <input type="range" id="c4" min="0" max="80" value="10">
-      <div class="total"><span>Tu extra este mes</span><b id="tot">0 €</b></div>
-      <p class="fine">Con 2 o 3 mesas al día que te valoren con 5★ llegas a unas 60 al mes.</p>
-    </div>
-  </div>
+<section style="padding: 88px 20px">
+<div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px">
+<div style="display: flex; flex-direction: column; gap: 14px; max-width: 720px">
+<div style="font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #002fa7; font-weight: 700">Lo que consigues</div>
+<h2 class="tr-h" style="font-size: clamp(40px, 6vw, 64px)">Más reseñas buenas. <em>Menos sustos</em> en Google.</h2>
+<p style="margin: 0; color: #4b5a73; font-size: 18px">Tus clientes ya están contentos; lo que falta es pedírselo en el momento justo y a la persona justa. Eso hace TopReview.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px">
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 6px">
+<b style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 64px; line-height: 1; color: #002fa7">+120</b>
+<span style="font-weight: 700; font-size: 17px">reseñas nuevas al mes por local</span>
+<small style="color: #4b5a73; font-size: 14px">Objetivo por local desde el primer mes</small>
+</div>
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 6px">
+<b style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 64px; line-height: 1; color: #002fa7">4,5 ★</b>
+<span style="font-weight: 700; font-size: 17px">nota media en Google</span>
+<small style="color: #4b5a73; font-size: 14px">La nota de POLKA en su ficha de Google</small>
+</div>
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 6px">
+<b style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 64px; line-height: 1; color: #002fa7">80 %</b>
+<span style="font-weight: 700; font-size: 17px">de las quejas llegan antes a ti</span>
+<small style="color: #4b5a73; font-size: 14px">Objetivo: las valoraciones de 1–3 ★ te llegan en privado</small>
+</div>
+</div>
+</div>
 </section>
 
-<section class="tips" id="consejos">
-  <div class="wrap">
-    <div class="eyebrow">Consejos</div>
-    <h2>Cuándo y cómo enseñar tu QR</h2>
-    <p class="lede">El mejor momento es cuando el cliente ya ha disfrutado: al traer la cuenta o el café. Natural, sin presión y con una sonrisa.</p>
-    <div class="say">
-      <div class="quote"><div class="when">Al traer la cuenta</div><p>«Si os ha gustado cómo os he atendido, me ayudáis mucho dejándome una valoración aquí. Son diez segundos.»</p></div>
-      <div class="quote"><div class="when">Si te dan las gracias</div><p>«¡Gracias a vosotros! Si queréis, escaneáis mi código y lo contáis en Google. Me hace mucha ilusión.»</p></div>
-      <div class="quote"><div class="when">Con clientes habituales</div><p>«Ya sabéis que ahora tengo mi propio QR. Cuando os venga bien, me echáis una mano.»</p></div>
-    </div>
-    <div class="dodont">
-      <div class="list yes">
-        <h3>Sí</h3>
-        <ul>
-          <li>Lleva el QR a mano: en la libreta, el datáfono o el portacuentas.</li>
-          <li>Pídelo a todas las mesas por igual, no solo a las que han ido bien.</li>
-          <li>Pide que te mencionen por tu nombre en la reseña de Google.</li>
-          <li>Lee los comentarios privados en tu panel: son pistas para mejorar.</li>
-        </ul>
-      </div>
-      <div class="list no">
-        <h3>No</h3>
-        <ul>
-          <li>No escanees tu propio QR ni pidas a amigos que te valoren: se detecta y no cuenta.</li>
-          <li>No ofrezcas descuentos ni invitaciones a cambio de la reseña. Google lo prohíbe y puede borrar las reseñas del local.</li>
-          <li>No insistas ni cojas el móvil del cliente.</li>
-          <li>No elijas solo a los clientes contentos para enseñarles el QR.</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+<section id="como-funciona" style="background: #ffffff; padding: 88px 20px">
+<div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px">
+<div style="display: flex; flex-direction: column; gap: 14px; max-width: 720px">
+<div style="font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #002fa7; font-weight: 700">Cómo funciona</div>
+<h2 class="tr-h" style="font-size: clamp(40px, 6vw, 64px)">Tres pasos. <em>Diez segundos</em> por mesa.</h2>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 18px">
+<div class="tr-ticket" style="background: #f7f1e3; border-radius: 14px; padding: 26px; border: 1px solid #e3d9c4; display: flex; flex-direction: column; gap: 12px">
+<div style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 16px; letter-spacing: .2em; color: #002fa7; text-transform: uppercase; border-bottom: 2px dashed #e3d9c4; padding-bottom: 10px; display: flex; justify-content: space-between"><span>Paso</span><span>01</span></div>
+<h3 class="tr-h" style="font-size: 32px">Das de alta a tu equipo</h3>
+<p style="margin: 0; color: #4b5a73">Escribes el nombre del camarero y TopReview genera su QR personal, una tarjeta lista para imprimir y su panel privado en el móvil.</p>
+</div>
+<div class="tr-ticket" style="background: #f7f1e3; border-radius: 14px; padding: 26px; border: 1px solid #e3d9c4; display: flex; flex-direction: column; gap: 12px">
+<div style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 16px; letter-spacing: .2em; color: #002fa7; text-transform: uppercase; border-bottom: 2px dashed #e3d9c4; padding-bottom: 10px; display: flex; justify-content: space-between"><span>Paso</span><span>02</span></div>
+<h3 class="tr-h" style="font-size: 32px">El cliente valora</h3>
+<p style="margin: 0; color: #4b5a73">Al traer la cuenta, el camarero enseña su QR. El cliente lo escanea con la cámara y puntúa de 1 a 5 estrellas. Sin descargas, sin registros.</p>
+</div>
+<div class="tr-ticket" style="background: #f7f1e3; border-radius: 14px; padding: 26px; border: 1px solid #e3d9c4; display: flex; flex-direction: column; gap: 12px">
+<div style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 16px; letter-spacing: .2em; color: #002fa7; text-transform: uppercase; border-bottom: 2px dashed #e3d9c4; padding-bottom: 10px; display: flex; justify-content: space-between"><span>Paso</span><span>03</span></div>
+<h3 class="tr-h" style="font-size: 32px">Google sube, tu equipo cobra</h3>
+<p style="margin: 0; color: #4b5a73">Después se le invita a dejar su reseña en Google, con un toque si ha puntuado 4–5 estrellas. Cada valoración suma a su bonus del mes.</p>
+</div>
+</div>
+</div>
 </section>
 
-<section class="panel">
-  <div class="wrap">
-    <div class="me" aria-label="Ejemplo de tu panel personal">
-      <div class="b">Top<span>Review</span></div>
-      <h4>Hola, Laura 👋</h4>
-      <small style="color:var(--muted)">Tu código personal</small>
-      <div class="qr" aria-hidden="true"></div>
-      <div class="g3">
-        <div><b>4,8</b><small>media ★</small></div>
-        <div><b>52</b><small>valoraciones</small></div>
-        <div><b id="meBonus">94 €</b><small>bonus del mes</small></div>
-      </div>
-    </div>
-    <div>
-      <div class="eyebrow">Tu panel</div>
-      <h2>Tus números, en tu móvil</h2>
-      <p class="lede">Al darte de alta recibes un enlace privado. Guárdalo en la pantalla de inicio del móvil y tendrás siempre a mano:</p>
-      <ul class="feat">
-        <li><span class="ic">QR</span><span><b>Tu QR</b> para enseñarlo directamente desde la pantalla si se te olvida la tarjeta.</span></li>
-        <li><span class="ic">★</span><span><b>Tu media y tus valoraciones</b> del mes, actualizadas al momento.</span></li>
-        <li><span class="ic">€</span><span><b>Tu bonus acumulado</b>, para que sepas lo que vas a cobrar.</span></li>
-      </ul>
-    </div>
-  </div>
+<section id="funciones" style="padding: 88px 20px">
+<div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px">
+<div style="display: flex; flex-direction: column; gap: 14px; max-width: 760px">
+<div style="font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #002fa7; font-weight: 700">Funciones</div>
+<h2 class="tr-h" style="font-size: clamp(40px, 6vw, 64px)">Todo lo que pasa en sala, <em>en una pantalla</em></h2>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 18px">
+
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 10px">
+<div style="width: 44px; height: 44px; border-radius: 12px; background: #e6ecfa; display: grid; place-items: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#002fa7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"></path></svg></div>
+<h3 style="margin: 0; font-size: 20px">Un QR por camarero</h3>
+<p style="margin: 0; color: #4b5a73">Cada valoración queda ligada a quien atendió la mesa. Por fin sabes quién te trae las cinco estrellas.</p>
+</div>
+
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 10px">
+<div style="width: 44px; height: 44px; border-radius: 12px; background: #e6ecfa; display: grid; place-items: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#002fa7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M12 7v4M12 14h.01"></path></svg></div>
+<h3 style="margin: 0; font-size: 20px">Las quejas, primero a ti</h3>
+<p style="margin: 0; color: #4b5a73">Con 1–3 estrellas, el cliente puede dejar un comentario privado para la dirección. Lo resuelves antes de que se convierta en una reseña.</p>
+</div>
+
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 10px">
+<div style="width: 44px; height: 44px; border-radius: 12px; background: #e6ecfa; display: grid; place-items: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#002fa7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M15 9.5a3 3 0 0 0-5.6 0M8 11h6M8 14h6M9.4 14.5a3 3 0 0 0 5.6 0"></path></svg></div>
+<h3 style="margin: 0; font-size: 20px">Incentivos que se calculan solos</h3>
+<p style="margin: 0; color: #4b5a73">Tú decides cuánto vale cada estrella. El bonus de cada camarero se actualiza en directo y lo exportas en CSV para nóminas.</p>
+</div>
+
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 10px">
+<div style="width: 44px; height: 44px; border-radius: 12px; background: #e6ecfa; display: grid; place-items: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#002fa7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg></div>
+<h3 style="margin: 0; font-size: 20px">Ranking y actividad en directo</h3>
+<p style="margin: 0; color: #4b5a73">Escaneos, valoraciones, reparto de estrellas, media y clics a Google por camarero. Filtra por hoy, semana o mes.</p>
+</div>
+
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 10px">
+<div style="width: 44px; height: 44px; border-radius: 12px; background: #e6ecfa; display: grid; place-items: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#002fa7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V8l7-5 7 5v13"></path><path d="M9 21v-6h6v6"></path></svg></div>
+<h3 style="margin: 0; font-size: 20px">Todos tus locales, cada uno con lo suyo</h3>
+<p style="margin: 0; color: #4b5a73">Cada local tiene su ficha de Google, sus QR y su portal independientes. Si tienes un grupo, lo ves todo desde arriba.</p>
+</div>
+
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 18px; padding: 26px; display: flex; flex-direction: column; gap: 10px">
+<div style="width: 44px; height: 44px; border-radius: 12px; background: #e6ecfa; display: grid; place-items: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#002fa7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2.5"></rect><path d="M11 18h2"></path></svg></div>
+<h3 style="margin: 0; font-size: 20px">Panel del camarero en su móvil</h3>
+<p style="margin: 0; color: #4b5a73">Cada camarero tiene un enlace privado con su QR, su media y lo que lleva ganado este mes. Motiva más que cualquier charla.</p>
+</div>
+
+</div>
+</div>
 </section>
 
-<section class="faq" id="faq">
-  <div class="wrap">
-    <div class="eyebrow">Preguntas frecuentes</div>
-    <h2>Lo que nos preguntáis</h2>
-    <details><summary>¿El cliente tiene que descargarse algo?</summary><p>No. Abre la cámara del móvil, apunta al QR y se abre una página. Toca las estrellas y listo.</p></details>
-    <details><summary>¿Qué pasa si un cliente me pone 1, 2 o 3 estrellas?</summary><p>No se publica en ningún sitio. Se le pide un comentario privado que solo ve la dirección, para mejorar. Si quiere, también puede opinar en Google, como cualquier cliente.</p></details>
-    <details><summary>¿Cuentan las reseñas que el cliente deja en Google?</summary><p>Tu bonus se calcula con las estrellas que el cliente te da en TopReview, justo después de escanear tu QR. Google no dice qué camarero atendió a cada cliente, por eso medimos en el momento.</p></details>
-    <details><summary>¿Puede un cliente valorarme varias veces?</summary><p>Cuenta un voto por móvil cada 12 horas. Si repite, se actualiza su voto en lugar de sumar otro.</p></details>
-    <details><summary>¿Cuándo cobro el bonus?</summary><p>Se calcula a final de mes y se paga con la nómina. Pregunta al encargado los detalles de tu local.</p></details>
-    <details><summary>¿Y si pierdo mi QR?</summary><p>Lo tienes siempre en tu panel personal. El encargado también puede reimprimirte la tarjeta cuando quieras.</p></details>
-    <details><summary>¿Qué hago si cambio de restaurante o me voy?</summary><p>El encargado desactiva tu QR. Tus valoraciones quedan guardadas para el cálculo del último mes.</p></details>
-  </div>
+<section style="padding: 0 20px 88px">
+<div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px">
+<div style="border-radius: 20px; overflow: hidden; border: 1px solid #e3d9c4; background: #ffffff; box-shadow: 0 40px 80px -40px #0b1f3a66">
+<div style="background: #0b1f3a; color: #ffffff; padding: 14px 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+<span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 24px; text-transform: uppercase">Top<span style="color: #9fb4ee">Review</span></span>
+<span style="display: flex; gap: 6px; align-items: center; font-size: 13px; color: #9fe3bd"><i style="width: 8px; height: 8px; border-radius: 50%; background: #3ccf7f; display: block"></i>En directo</span>
+<span style="margin-left: auto; font-size: 13px; border: 1px solid #ffffff40; border-radius: 10px; padding: 8px 12px">Este mes</span>
+<span style="font-size: 13px; font-weight: 700; background: #ffffff; color: #002fa7; border-radius: 10px; padding: 8px 12px">Exportar CSV</span>
+</div>
+<div style="padding: 22px; background: #f7f1e3; display: flex; flex-direction: column; gap: 16px">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr)); gap: 12px">
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 14px; padding: 14px 16px"><small style="font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #4b5a73">Escaneos</small><div style="font-size: 30px; font-weight: 700">128</div></div>
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 14px; padding: 14px 16px"><small style="font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #4b5a73">Valoraciones</small><div style="font-size: 30px; font-weight: 700">96</div></div>
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 14px; padding: 14px 16px"><small style="font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #4b5a73">Media</small><div style="font-size: 30px; font-weight: 700">4,7 <span style="color: #f2b705">★</span></div></div>
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 14px; padding: 14px 16px"><small style="font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #4b5a73">Enviados a Google</small><div style="font-size: 30px; font-weight: 700">71</div></div>
+<div style="background: #e6ecfa; border: 1px solid #c9d3e6; border-radius: 14px; padding: 14px 16px"><small style="font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #002fa7">Bonus del equipo</small><div style="font-size: 30px; font-weight: 700; color: #002fa7">154 €</div></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 4px; flex: 2 1 520px; min-width: 0; overflow-x: auto">
+<b style="font-size: 16px; margin-bottom: 6px">Ranking de camareros</b>
+<div style="display: grid; grid-template-columns: 28px 1fr 2fr 60px 70px; gap: 12px; align-items: center; font-size: 12px; color: #4b5a73; padding: 6px 0; border-bottom: 1px solid #efe7d6"><span>#</span><span>Camarero</span><span>Reparto ★</span><span>Media</span><span style="text-align: right">Bonus</span></div>
+<div style="display: grid; grid-template-columns: 28px 1fr 2fr 60px 70px; gap: 12px; align-items: center; font-size: 15px; padding: 10px 0; border-bottom: 1px solid #efe7d6"><b style="color: #002fa7">1</b><b>Laura</b><div style="display: flex; height: 8px; border-radius: 9px; overflow: hidden"><i style="flex: 34; background: #002fa7"></i><i style="flex: 8; background: #9fb4ee"></i><i style="flex: 2; background: #ddd5c2"></i></div><b style="color: #16824a">4,8</b><b style="text-align: right; color: #002fa7">76 €</b></div>
+<div style="display: grid; grid-template-columns: 28px 1fr 2fr 60px 70px; gap: 12px; align-items: center; font-size: 15px; padding: 10px 0; border-bottom: 1px solid #efe7d6"><b style="color: #002fa7">2</b><b>Javier</b><div style="display: flex; height: 8px; border-radius: 9px; overflow: hidden"><i style="flex: 18; background: #002fa7"></i><i style="flex: 9; background: #9fb4ee"></i><i style="flex: 3; background: #ddd5c2"></i></div><b>4,5</b><b style="text-align: right; color: #002fa7">45 €</b></div>
+<div style="display: grid; grid-template-columns: 28px 1fr 2fr 60px 70px; gap: 12px; align-items: center; font-size: 15px; padding: 10px 0"><b style="color: #002fa7">3</b><b>Ane</b><div style="display: flex; height: 8px; border-radius: 9px; overflow: hidden"><i style="flex: 12; background: #002fa7"></i><i style="flex: 7; background: #9fb4ee"></i><i style="flex: 3; background: #ddd5c2"></i></div><b>4,4</b><b style="text-align: right; color: #002fa7">33 €</b></div>
+</div>
+<div style="background: #ffffff; border: 1px solid #e3d9c4; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; flex: 1 1 280px; min-width: 0">
+<b style="font-size: 16px">Actividad en directo</b>
+<div style="display: flex; flex-direction: column; gap: 2px; border-bottom: 1px solid #efe7d6; padding-bottom: 8px"><span style="font-size: 14px"><b>Laura</b> recibió <span style="color: #f2b705">★★★★★</span></span><small style="color: #4b5a73; font-size: 12px">Mesa de las 21:42 · enviado a Google</small></div>
+<div style="display: flex; flex-direction: column; gap: 2px; border-bottom: 1px solid #efe7d6; padding-bottom: 8px"><span style="font-size: 14px"><b>Javier</b> recibió <span style="color: #f2b705">★★★★</span><span style="color: #ddd5c2">★</span></span><small style="color: #4b5a73; font-size: 12px">Mesa de las 21:30 · enviado a Google</small></div>
+<div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px"><b>Ane</b> recibió <span style="color: #f2b705">★★</span><span style="color: #ddd5c2">★★★</span></span><small style="color: #c92a42; font-size: 12px; font-weight: 700">Comentario privado: «Tardó mucho el segundo plato»</small></div>
+</div>
+</div>
+</div>
+</div>
+<small style="color: #4b5a73; font-size: 13px; text-align: center">El panel del encargado. Datos de ejemplo.</small>
+</div>
 </section>
 
-<section class="end">
-  <div class="wrap">
-    <h2>Tu servicio,<br>en <em>cartel</em></h2>
-    <p class="lede">Pide al encargado tu QR personal y el enlace a tu panel. Esta misma noche puedes empezar a sumar.</p>
-    <div class="btns"><a class="btn gold" href="#como">Repasar cómo funciona</a></div>
-  </div>
+<section style="background: #ffffff; padding: 88px 20px">
+<div style="max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 48px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #002fa7; font-weight: 700">Juego limpio</div>
+<h2 class="tr-h" style="font-size: clamp(40px, 6vw, 64px)">Reseñas que <em>Google no te va a borrar</em></h2>
+<p style="margin: 0; color: #4b5a73; font-size: 18px">Google penaliza filtrar reseñas o premiar al cliente por dejarlas. TopReview está montado para no hacer ninguna de las dos cosas, y así tu nota sube sin poner en riesgo la ficha.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="background: #f7f1e3; border: 1px solid #e3d9c4; border-radius: 16px; padding: 20px 22px; display: flex; gap: 14px; align-items: flex-start">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16824a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M5 12l5 5L20 7"></path></svg>
+<div><b>Todos los clientes ven el enlace a Google.</b> <span style="color: #4b5a73">También los que puntúan bajo: nadie se queda fuera.</span></div>
+</div>
+<div style="background: #f7f1e3; border: 1px solid #e3d9c4; border-radius: 16px; padding: 20px 22px; display: flex; gap: 14px; align-items: flex-start">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16824a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M5 12l5 5L20 7"></path></svg>
+<div><b>El premio es para el equipo, no para el cliente.</b> <span style="color: #4b5a73">Sin descuentos ni regalos a cambio de reseñas.</span></div>
+</div>
+<div style="background: #f7f1e3; border: 1px solid #e3d9c4; border-radius: 16px; padding: 20px 22px; display: flex; gap: 14px; align-items: flex-start">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16824a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M5 12l5 5L20 7"></path></svg>
+<div><b>El bonus se basa en las estrellas de TopReview.</b> <span style="color: #4b5a73">Google no dice qué camarero originó cada reseña; TopReview sí.</span></div>
+</div>
+<div style="background: #f7f1e3; border: 1px solid #e3d9c4; border-radius: 16px; padding: 20px 22px; display: flex; gap: 14px; align-items: flex-start">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16824a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M5 12l5 5L20 7"></path></svg>
+<div><b>Antifraude incluido.</b> <span style="color: #4b5a73">Un voto por móvil y camarero cada 12 horas; si repite, se actualiza en vez de sumar.</span></div>
+</div>
+</div>
+</div>
 </section>
 
-<footer>
-  <div class="wrap"><span>TopReview · <span class="biz">POLKA San Sebastián</span></span><span>Valoraciones de sala · Reseñas en Google</span></div>
+<section style="padding: 88px 20px">
+<div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; align-items: center; text-align: center">
+<div aria-label="5 estrellas" role="img" style="font-size: 30px; letter-spacing: 4px; color: #f2b705">★★★★★</div>
+<p class="tr-h" style="font-size: clamp(32px, 4.4vw, 48px); line-height: 1.05; text-transform: none; font-weight: 700">«Antes pedíamos reseñas cuando nos acordábamos. Ahora cada camarero tiene su QR, sabe que cada estrella cuenta y la sala compite por dar el mejor servicio. Las quejas me llegan a mí primero y en Google no paramos de sumar.»</p>
+<div style="display: flex; flex-direction: column; gap: 2px"><b>Felix Lizarraga</b><span style="color: #4b5a73; font-size: 15px">Propietario · POLKA San Sebastián</span></div>
+</div>
+</section>
+
+<section id="tarifas" style="background: #ffffff; padding: 88px 20px">
+<div style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px">
+<div style="display: flex; flex-direction: column; gap: 14px; max-width: 720px">
+<div style="font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #002fa7; font-weight: 700">Tarifas</div>
+<h2 class="tr-h" style="font-size: clamp(40px, 6vw, 64px)">Un precio claro, <em>por local</em></h2>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); gap: 18px">
+<div style="background: #f7f1e3; border: 1px solid #e3d9c4; border-radius: 20px; padding: 30px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h3 class="tr-h" style="font-size: 36px">Local</h3><span style="color: #4b5a73">Para un restaurante, bar o cafetería</span></div>
+<div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap"><b style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 64px; line-height: 1; color: #002fa7">59 €</b><span style="color: #4b5a73">/ mes + IVA</span></div>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; color: #4b5a73">
+<li style="display: flex; gap: 10px"><b style="color: #16824a">✓</b>1 local · hasta 20 camareros</li>
+<li style="display: flex; gap: 10px"><b style="color: #16824a">✓</b>QR y tarjeta imprimible por camarero</li>
+<li style="display: flex; gap: 10px"><b style="color: #16824a">✓</b>Panel del encargado en directo</li>
+<li style="display: flex; gap: 10px"><b style="color: #16824a">✓</b>Comentarios privados de 1–3 ★</li>
+<li style="display: flex; gap: 10px"><b style="color: #16824a">✓</b>Bonus por estrellas y exportación a nóminas</li>
+<li style="display: flex; gap: 10px"><b style="color: #16824a">✓</b>Panel privado para cada camarero</li>
+</ul>
+<a class="tr-btn tr-btn-l" href="#demo" style="margin-top: auto">Me interesa</a>
+</div>
+<div style="background: #0b1f3a; color: #ffffff; border-radius: 20px; padding: 30px; display: flex; flex-direction: column; gap: 18px" class="tr-dark">
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap"><h3 class="tr-h" style="font-size: 36px">Grupo</h3><span style="font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; background: #f2b705; color: #0b1f3a; border-radius: 99px; padding: 4px 10px">Varios locales</span></div><span style="color: #c9d3e6">Para grupos de hostelería y franquiciados</span></div>
+<div style="display: flex; align-items: baseline; gap: 6px"><b style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-size: 64px; line-height: 1; color: #ffffff">A medida</b></div>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; color: #e6ecfa">
+<li style="display: flex; gap: 10px"><b style="color: #f2b705">✓</b>Todo lo del plan Local, en cada local</li>
+<li style="display: flex; gap: 10px"><b style="color: #f2b705">✓</b>Ficha de Google, QR y portal independientes por local</li>
+<li style="display: flex; gap: 10px"><b style="color: #f2b705">✓</b>Vista de grupo para dirección</li>
+<li style="display: flex; gap: 10px"><b style="color: #f2b705">✓</b>Alta y formación del equipo en sala</li>
+</ul>
+<a class="tr-btn tr-btn-y" href="#demo" style="margin-top: auto">Hablemos</a>
+</div>
+</div>
+</div>
+</section>
+
+<section id="preguntas" style="padding: 88px 20px">
+<div style="max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #002fa7; font-weight: 700">Preguntas</div>
+<h2 class="tr-h" style="font-size: clamp(40px, 6vw, 64px)">Lo que nos preguntan <em>los dueños</em></h2>
+</div>
+<div class="tr-faq">
+<details open>
+<summary>¿El cliente tiene que descargarse algo?</summary>
+<p>No. Escanea el QR con la cámara del móvil, puntúa y listo. Sin app, sin registro, en unos diez segundos.</p>
+</details>
+<details>
+<summary>¿Esto lo permite Google?</summary>
+<p>Sí. Todos los clientes ven el enlace a Google, puntúen lo que puntúen, y nadie recibe nada a cambio de reseñar. El incentivo es para tu equipo por dar buen servicio.</p>
+</details>
+<details>
+<summary>¿Qué pasa con las valoraciones bajas?</summary>
+<p>Con 1–3 estrellas se le pide al cliente un comentario privado para la dirección. Te llega al panel y puedes actuar esa misma noche.</p>
+</details>
+<details>
+<summary>¿Cómo sé qué camarero ha conseguido cada reseña?</summary>
+<p>Google no lo dice, pero TopReview sí: cada valoración entra por el QR personal de un camarero, así que sabes quién atendió cada mesa.</p>
+</details>
+<details>
+<summary>¿Y si un camarero se vota a sí mismo?</summary>
+<p>Cada móvil solo puede votar una vez cada 12 horas al mismo camarero; si repite, se actualiza el voto en vez de sumar otro.</p>
+</details>
+<details>
+<summary>¿Cómo se paga el bonus?</summary>
+<p>Tú fijas cuánto vale cada estrella. A final de mes exportas el CSV con el bonus de cada camarero y lo pasas a nóminas.</p>
+</details>
+<details>
+<summary>Tengo varios locales, ¿se mezclan los datos?</summary>
+<p>No. Cada local tiene su ficha de Google, sus QR y su portal. Con el plan Grupo los ves todos juntos desde dirección.</p>
+</details>
+</div>
+</div>
+</section>
+
+<section id="demo" class="tr-dark" style="background: #0b1f3a; color: #ffffff; padding: 96px 20px; position: relative; overflow: hidden">
+<div style="max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(440px, 100%), 1fr)); gap: 48px; align-items: center">
+<div style="display: flex; flex-direction: column; gap: 18px">
+<div aria-hidden="true" style="display: flex; gap: 14px"><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i><i class="tr-bulb"></i></div>
+<h2 class="tr-h" style="font-size: clamp(48px, 7vw, 88px)">Pon a tu sala <em>en cartel</em></h2>
+<p style="margin: 0; color: #c9d3e6; font-size: 18px; max-width: 46ch">Déjanos tu teléfono y te enseñamos TopReview en 15 minutos, con los datos reales de un local en marcha.</p>
+</div>
+<form id="tr-form" style="background: #ffffff14; border: 1px solid #ffffff30; border-radius: 20px; padding: 26px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="tr-nombre" style="font-size: 14px; color: #e6ecfa">Tu nombre</label><input id="tr-nombre" name="nombre" class="tr-in" type="text" required autocomplete="name" placeholder="Nombre y apellido"></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="tr-local" style="font-size: 14px; color: #e6ecfa">Tu local</label><input id="tr-local" name="local" class="tr-in" type="text" required placeholder="Nombre y ciudad"></div>
+<div style="display: flex; flex-direction: column; gap: 6px"><label for="tr-tel" style="font-size: 14px; color: #e6ecfa">Teléfono</label><input id="tr-tel" name="telefono" class="tr-in" type="tel" required autocomplete="tel" placeholder="600 000 000"></div>
+<button type="submit" class="tr-btn tr-btn-y" style="border: 0; font: inherit; font-weight: 700; cursor: pointer; margin-top: 6px">Que me llamen</button>
+<small style="color: #c9d3e6; font-size: 12px">Solo usamos tus datos para llamarte. [Enlace a política de privacidad]</small>
+</form>
+</div>
+</section>
+
+<footer style="background: #f7f1e3; padding: 40px 20px; border-top: 1px solid #e3d9c4">
+<div style="max-width: 1120px; margin: 0 auto; display: flex; gap: 20px 40px; flex-wrap: wrap; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-family: 'Big Shoulders Display', Impact, sans-serif; font-weight: 900; font-size: 26px; text-transform: uppercase">Top<span style="color: #002fa7">Review</span></span>
+<small style="color: #4b5a73; font-size: 13px">Valoraciones de sala · Reseñas en Google · Hecho en Donostia</small>
+</div>
+<div style="display: flex; gap: 10px 22px; flex-wrap: wrap; font-size: 14px">
+<a href="https://topreview.up.railway.app/admin">Acceso clientes</a>
+<a href="camareros.html">Para camareros</a>
+<a href="#inicio">Aviso legal</a>
+<a href="#inicio">Privacidad</a>
+<a href="#inicio">Cookies</a>
+</div>
+</div>
 </footer>
 
+</div>
 <script>
-  // Importes por defecto; en la app publicada se leen de los Ajustes del dashboard
-  let bonus = { 5:2, 4:1, 3:0, 2:0, 1:0 };
-  const eur = (n) => n.toLocaleString('es-ES', { style:'currency', currency:'EUR', maximumFractionDigits: n % 1 ? 2 : 0 });
-  const $ = (id) => document.getElementById(id);
-
-  function renderRates() {
-    $('rates').innerHTML = [5,4,3,2,1].map(k => `<div class="rate ${k===5?'top':''}">
-      <span class="s" aria-label="${k} estrellas">${'★'.repeat(k)}<span>${'★'.repeat(5-k)}</span></span>
-      <b>${bonus[k] > 0 ? '+' : ''}${eur(bonus[k])}</b></div>`).join('');
-  }
-  function calc() {
-    const a = +$('c5').value, b = +$('c4').value;
-    $('v5').textContent = a; $('v4').textContent = b;
-    $('tot').textContent = eur(a * bonus[5] + b * bonus[4]);
-  }
-  $('c5').oninput = calc; $('c4').oninput = calc;
-  try { const q = qrcode(0, 'M'); q.addData('https://topreview.up.railway.app/r/laura'); q.make(); document.querySelector('.me .qr').innerHTML = q.createImgTag(4, 0); } catch {}
-  renderRates(); calc();
-  $('meBonus').textContent = eur(44 * bonus[5] + 8 * bonus[4]);
-
-  fetch('https://topreview.up.railway.app/api/public/info' + location.search).then(r => r.ok ? r.json() : null).then(d => {
-    if (!d) return;
-    bonus = { 5:+d.bonus_5||0, 4:+d.bonus_4||0, 3:+d.bonus_3||0, 2:+d.bonus_2||0, 1:+d.bonus_1||0 };
-    document.querySelectorAll('.biz').forEach(el => el.textContent = d.business_name);
-    renderRates(); calc();
-    $('meBonus').textContent = eur(44 * bonus[5] + 8 * bonus[4]);
-  }).catch(() => {});
+/* Formulario "Que me llamen": abre WhatsApp con los datos ya escritos. */
+const WHATSAPP = "34607420835";
+document.getElementById("tr-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  const f = new FormData(this);
+  const txt = "Hola, quiero una demo de TopReview.\nNombre: " + f.get("nombre") +
+              "\nLocal: " + f.get("local") + "\nTeléfono: " + f.get("telefono");
+  window.open("https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(txt), "_blank", "noopener");
+});
 </script>
-
 </body>
 </html>
