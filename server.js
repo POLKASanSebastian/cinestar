@@ -301,6 +301,7 @@ app.get('/', (req, res) => res.send(`<!doctype html><html lang="es"><head><meta 
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>${landing}</body></html>`));
 app.get('/api/public/info', (req, res) => {
   const s = getSettings();
+  res.set('Access-Control-Allow-Origin', '*'); // la web de camareros en GitHub Pages lee estos datos
   res.json({ business_name: s.business_name, bonus_5: s.bonus_5, bonus_4: s.bonus_4, bonus_3: s.bonus_3, bonus_2: s.bonus_2, bonus_1: s.bonus_1 });
 });
 
