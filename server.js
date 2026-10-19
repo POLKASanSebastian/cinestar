@@ -13,6 +13,11 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'topreview';
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
+// ---------- Utilidades de texto ----------
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const slugify = (s) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'camarero';
+
 // ---------- Base de datos ----------
 // La base de datos se llamaba cinestar.db: si existe, se renombra para no perder datos.
 const DB_FILE = path.join(DATA_DIR, 'topreview.db');
@@ -44,29 +49,86 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_events_w ON events(waiter_id, type, created_at);
 `);
 
+// ---------- Locales (multi-establecimiento) ----------
+// Cada local tiene su propio acceso, ficha de Google, bonus y camareros. El acceso maestro (ADMIN_USER/ADMIN_PASSWORD) los gestiona todos.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS venues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    login TEXT UNIQUE NOT NULL,
+    pass_hash TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS venue_settings (venue_id INTEGER NOT NULL, key TEXT NOT NULL, value TEXT, PRIMARY KEY (venue_id, key));
+`);
+if (!db.prepare('PRAGMA table_info(waiters)').all().some((c) => c.name === 'venue_id')) {
+  db.exec('ALTER TABLE waiters ADD COLUMN venue_id INTEGER REFERENCES venues(id)');
+}
+db.exec('CREATE INDEX IF NOT EXISTS idx_waiters_v ON waiters(venue_id)');
+
 const DEFAULT_SETTINGS = {
-  business_name: process.env.BUSINESS_NAME || 'Mi Restaurante',
-  google_review_url: process.env.GOOGLE_REVIEW_URL || '',
+  business_name: 'Mi Restaurante',
+  google_review_url: '',
   bonus_5: '2', bonus_4: '1', bonus_3: '0', bonus_2: '0', bonus_1: '0',
   redirect_min_stars: '4',
 };
-for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
-  db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run(k, v);
+
+const hashPass = (pw) => { const salt = crypto.randomBytes(16).toString('hex'); return salt + ':' + crypto.scryptSync(pw, salt, 32).toString('hex'); };
+const checkPass = (pw, stored) => {
+  const [salt, hash] = String(stored).split(':');
+  if (!salt || !hash) return false;
+  const a = crypto.scryptSync(pw, salt, 32), b = Buffer.from(hash, 'hex');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+};
+const newPassword = () => Array.from(crypto.randomBytes(10), (x) => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 31]).join('');
+
+function uniqueValue(table, col, base) {
+  let v = base, i = 1;
+  while (db.prepare(`SELECT 1 FROM ${table} WHERE ${col} = ?`).get(v) || (col === 'login' && v === ADMIN_USER)) v = `${base}-${++i}`;
+  return v;
 }
-const getSettings = () =>
-  Object.fromEntries(db.prepare('SELECT key, value FROM settings').all().map((r) => [r.key, r.value]));
+
+function createVenue(name, { login, google_review_url } = {}) {
+  const slug = uniqueValue('venues', 'slug', slugify(name));
+  const lg = uniqueValue('venues', 'login', slugify(login || name.split(/\s+/)[0]));
+  const password = newPassword();
+  const r = db.prepare('INSERT INTO venues (name, slug, login, pass_hash) VALUES (?, ?, ?, ?)').run(name, slug, lg, hashPass(password));
+  const id = Number(r.lastInsertRowid);
+  setSettings(id, { ...DEFAULT_SETTINGS, business_name: name, google_review_url: google_review_url || '' });
+  return { id, name, slug, login: lg, password };
+}
+
+function getSettings(venueId) {
+  const rows = db.prepare('SELECT key, value FROM venue_settings WHERE venue_id = ?').all(venueId);
+  return { ...DEFAULT_SETTINGS, ...Object.fromEntries(rows.map((r) => [r.key, r.value])) };
+}
+function setSettings(venueId, values) {
+  const stmt = db.prepare('INSERT INTO venue_settings (venue_id, key, value) VALUES (?, ?, ?) ON CONFLICT(venue_id, key) DO UPDATE SET value = excluded.value');
+  for (const k of Object.keys(DEFAULT_SETTINGS)) if (values?.[k] !== undefined) stmt.run(venueId, k, String(values[k]).trim());
+  if (values?.business_name) db.prepare('UPDATE venues SET name = ? WHERE id = ?').run(String(values.business_name).trim(), venueId);
+}
+
+// Migración: la instalación de un solo local pasa a ser el primer local (POLKA), con sus ajustes y camareros.
+if (!db.prepare('SELECT COUNT(*) AS n FROM venues').get().n) {
+  const old = Object.fromEntries(db.prepare('SELECT key, value FROM settings').all().map((r) => [r.key, r.value]));
+  const name = old.business_name || process.env.BUSINESS_NAME || 'Mi Restaurante';
+  const v = createVenue(name, { google_review_url: old.google_review_url || process.env.GOOGLE_REVIEW_URL || '' });
+  setSettings(v.id, { ...old, business_name: name });
+  db.prepare('UPDATE waiters SET venue_id = ? WHERE venue_id IS NULL').run(v.id);
+  console.log(`Local inicial creado: ${name} (usuario ${v.login}). Su contraseña se genera desde el panel maestro.`);
+}
+db.prepare('UPDATE waiters SET venue_id = (SELECT MIN(id) FROM venues) WHERE venue_id IS NULL').run();
 
 // ---------- Tiempo real (SSE) ----------
-const clients = new Set();
-function broadcast(event) {
+const clients = new Set(); // { res, venueId }
+function broadcast(event, venueId) {
   const msg = `data: ${JSON.stringify(event)}\n\n`;
-  for (const res of clients) res.write(msg);
+  for (const c of clients) if (c.venueId === venueId) c.res.write(msg);
 }
 
 // ---------- Utilidades ----------
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const slugify = (s) =>
-  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'camarero';
 const baseUrl = (req) => process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
 
 function visitorId(req, res) {
@@ -81,23 +143,45 @@ function addEvent(waiterId, type, extra = {}) {
   const r = db
     .prepare('INSERT INTO events (waiter_id, type, stars, comment, visitor) VALUES (?, ?, ?, ?, ?)')
     .run(waiterId, type, extra.stars ?? null, extra.comment ?? null, extra.visitor ?? null);
-  const w = db.prepare('SELECT name FROM waiters WHERE id = ?').get(waiterId);
-  broadcast({ id: Number(r.lastInsertRowid), waiter_id: waiterId, waiter: w?.name, type, stars: extra.stars ?? null, created_at: new Date().toISOString() });
+  const w = db.prepare('SELECT name, venue_id FROM waiters WHERE id = ?').get(waiterId);
+  broadcast({ id: Number(r.lastInsertRowid), waiter_id: waiterId, waiter: w?.name, type, stars: extra.stars ?? null, created_at: new Date().toISOString() }, w?.venue_id);
   return Number(r.lastInsertRowid);
 }
 
-function requireAdmin(req, res, next) {
+// Acceso: usuario maestro (todos los locales) o usuario de un local (solo el suyo)
+function whoIs(req) {
   const [scheme, encoded] = (req.headers.authorization || '').split(' ');
-  if (scheme === 'Basic' && encoded) {
-    const [u, ...p] = Buffer.from(encoded, 'base64').toString().split(':');
-    if (u === ADMIN_USER && p.join(':') === ADMIN_PASSWORD) return next();
-  }
-  res.set('WWW-Authenticate', 'Basic realm="TopReview"').status(401).send('Acceso restringido');
+  if (scheme !== 'Basic' || !encoded) return null;
+  const [u, ...p] = Buffer.from(encoded, 'base64').toString().split(':');
+  const pw = p.join(':');
+  if (u === ADMIN_USER && pw === ADMIN_PASSWORD) return { role: 'master' };
+  const v = db.prepare('SELECT id, pass_hash FROM venues WHERE login = ? AND active = 1').get(u);
+  if (v && checkPass(pw, v.pass_hash)) return { role: 'venue', venueId: v.id };
+  return null;
+}
+const deny = (res) => res.set('WWW-Authenticate', 'Basic realm="TopReview"').status(401).send('Acceso restringido');
+
+function requireMaster(req, res, next) {
+  const who = whoIs(req);
+  if (!who) return deny(res);
+  if (who.role !== 'master') return res.redirect('/admin');
+  req.who = who; next();
+}
+
+function requireVenue(req, res, next) {
+  const who = whoIs(req);
+  if (!who) return deny(res);
+  req.who = who;
+  if (who.role === 'venue') { req.venueId = who.venueId; return next(); }
+  const v = db.prepare('SELECT id FROM venues WHERE id = ?').get(Number(req.query.v));
+  if (v) { req.venueId = v.id; return next(); }
+  if (req.path === '/' || req.originalUrl.startsWith('/admin?') || req.originalUrl === '/admin') return res.redirect('/master');
+  res.status(400).json({ error: 'Falta el local (?v=)' });
 }
 
 // Estadísticas por camarero en un rango de fechas (UTC, formato SQLite)
-function computeStats(from, to) {
-  const s = getSettings();
+function computeStats(venueId, from, to) {
+  const s = getSettings(venueId);
   const bonus = [0, +s.bonus_1 || 0, +s.bonus_2 || 0, +s.bonus_3 || 0, +s.bonus_4 || 0, +s.bonus_5 || 0];
   const rows = db.prepare(`
     SELECT w.id, w.name, w.slug, w.token, w.active,
@@ -112,7 +196,8 @@ function computeStats(from, to) {
       AVG(CASE WHEN e.type = 'rating' THEN e.stars END) AS avg
     FROM waiters w
     LEFT JOIN events e ON e.waiter_id = w.id AND e.created_at >= ? AND e.created_at < ?
-    GROUP BY w.id ORDER BY w.active DESC, w.name`).all(from, to);
+    WHERE w.venue_id = ?
+    GROUP BY w.id ORDER BY w.active DESC, w.name`).all(from, to, venueId);
   return rows.map((r) => {
     const n = (k) => Number(r[k] || 0);
     const earned = [1, 2, 3, 4, 5].reduce((acc, k) => acc + n('s' + k) * bonus[k], 0);
@@ -148,16 +233,16 @@ app.use(express.json());
 
 // ---- Página pública del cliente (lo que abre el QR) ----
 app.get('/r/:slug', (req, res) => {
-  const w = db.prepare('SELECT * FROM waiters WHERE slug = ? AND active = 1').get(req.params.slug);
+  const w = db.prepare("SELECT w.* FROM waiters w JOIN venues v ON v.id = w.venue_id WHERE w.slug = ? AND w.active = 1 AND v.active = 1").get(req.params.slug);
   if (!w) return res.status(404).send(page('No encontrado', '<p class="center">Este código ya no está activo.</p>'));
   const visitor = visitorId(req, res);
   addEvent(w.id, 'scan', { visitor });
-  const s = getSettings();
+  const s = getSettings(w.venue_id);
   res.send(page(`Valora a ${w.name}`, reviewBody(w, s)));
 });
 
 app.post('/api/r/:slug/rate', (req, res) => {
-  const w = db.prepare('SELECT * FROM waiters WHERE slug = ? AND active = 1').get(req.params.slug);
+  const w = db.prepare("SELECT w.* FROM waiters w JOIN venues v ON v.id = w.venue_id WHERE w.slug = ? AND w.active = 1 AND v.active = 1").get(req.params.slug);
   const stars = Math.round(Number(req.body?.stars));
   if (!w || !(stars >= 1 && stars <= 5)) return res.status(400).json({ error: 'Datos no válidos' });
   const visitor = visitorId(req, res);
@@ -168,11 +253,11 @@ app.post('/api/r/:slug/rate', (req, res) => {
   if (prev) {
     db.prepare('UPDATE events SET stars = ? WHERE id = ?').run(stars, prev.id);
     id = prev.id;
-    broadcast({ type: 'refresh' });
+    broadcast({ type: 'refresh' }, w.venue_id);
   } else {
     id = addEvent(w.id, 'rating', { stars, visitor });
   }
-  const s = getSettings();
+  const s = getSettings(w.venue_id);
   res.json({ id, redirect: stars >= Number(s.redirect_min_stars) && !!s.google_review_url });
 });
 
@@ -180,14 +265,15 @@ app.post('/api/r/:slug/comment', (req, res) => {
   const visitor = visitorId(req, res);
   const comment = String(req.body?.comment || '').slice(0, 1000).trim();
   const r = db.prepare("UPDATE events SET comment = ? WHERE id = ? AND visitor = ? AND type = 'rating'").run(comment, Number(req.body?.id), visitor);
-  if (r.changes) broadcast({ type: 'refresh' });
+  const ev = db.prepare('SELECT w.venue_id FROM events e JOIN waiters w ON w.id = e.waiter_id WHERE e.id = ?').get(Number(req.body?.id));
+  if (r.changes) broadcast({ type: 'refresh' }, ev?.venue_id);
   res.json({ ok: !!r.changes });
 });
 
 // Registra el clic y redirige a Google
 app.get('/go/:slug', (req, res) => {
   const w = db.prepare('SELECT * FROM waiters WHERE slug = ?').get(req.params.slug);
-  const s = getSettings();
+  const s = w ? getSettings(w.venue_id) : {};
   if (!w || !s.google_review_url) return res.redirect('/');
   addEvent(w.id, 'google_click', { visitor: visitorId(req, res) });
   res.redirect(s.google_review_url);
@@ -198,7 +284,8 @@ app.get('/me/:token', (req, res) => {
   const w = db.prepare('SELECT * FROM waiters WHERE token = ?').get(req.params.token);
   if (!w) return res.status(404).send(page('No encontrado', '<p class="center">Enlace no válido.</p>'));
   const [from, to] = rangeFromQuery({ period: 'month' });
-  const st = computeStats(from, to).find((x) => x.id === w.id);
+  const st = computeStats(w.venue_id, from, to).find((x) => x.id === w.id);
+  const vs = db.prepare('SELECT slug FROM venues WHERE id = ?').get(w.venue_id);
   const qr = `/qr/${w.slug}.png`;
   res.send(page(`Hola ${w.name}`, `
     <div class="card center">
@@ -212,7 +299,7 @@ app.get('/me/:token', (req, res) => {
         <div><b>${st.bonus.toFixed(2)} €</b><small>bonus del mes</small></div>
       </div>
       <p class="muted">5★ ${st.stars[5]} · 4★ ${st.stars[4]} · 3★ ${st.stars[3]} · 2★ ${st.stars[2]} · 1★ ${st.stars[1]}</p>
-      <p class="small"><a href="/">¿Cómo funciona TopReview?</a></p>
+      <p class="small"><a href="/?local=${esc(vs?.slug || '')}">¿Cómo funciona TopReview?</a></p>
     </div>`));
 });
 
@@ -225,13 +312,13 @@ app.get('/qr/:slug.png', async (req, res) => {
 });
 
 // ---- Admin ----
-app.use(['/admin', '/api/admin'], requireAdmin);
+app.use(['/admin', '/api/admin'], requireVenue);
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 
 app.get('/admin/card/:id', (req, res) => {
-  const w = db.prepare('SELECT * FROM waiters WHERE id = ?').get(Number(req.params.id));
+  const w = db.prepare('SELECT * FROM waiters WHERE id = ? AND venue_id = ?').get(Number(req.params.id), req.venueId);
   if (!w) return res.sendStatus(404);
-  const s = getSettings();
+  const s = getSettings(req.venueId);
   const num = String(w.id).padStart(4, '0');
   const bulbs = '<i></i>'.repeat(11);
   res.send(`<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -301,22 +388,25 @@ app.get('/api/admin/stream', (req, res) => {
   res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
   res.flushHeaders();
   res.write('retry: 3000\n\n');
-  clients.add(res);
+  const c = { res, venueId: req.venueId };
+  clients.add(c);
   const ping = setInterval(() => res.write(': ping\n\n'), 25000);
-  req.on('close', () => { clearInterval(ping); clients.delete(res); });
+  req.on('close', () => { clearInterval(ping); clients.delete(c); });
 });
 
 app.get('/api/admin/stats', (req, res) => {
   const [from, to] = rangeFromQuery(req.query);
-  const waiters = computeStats(from, to);
+  const waiters = computeStats(req.venueId, from, to);
   const feed = db.prepare(`SELECT e.id, e.type, e.stars, e.comment, e.created_at, w.name AS waiter
     FROM events e JOIN waiters w ON w.id = e.waiter_id
-    WHERE e.created_at >= ? AND e.created_at < ? AND e.type IN ('rating','google_click')
-    ORDER BY e.id DESC LIMIT 40`).all(from, to);
-  const daily = db.prepare(`SELECT date(created_at) AS day, COUNT(*) AS n, AVG(stars) AS avg
-    FROM events WHERE type = 'rating' AND created_at >= ? AND created_at < ?
-    GROUP BY day ORDER BY day`).all(from, to);
-  res.json({ from, to, settings: getSettings(), waiters, feed, daily, base: baseUrl(req) });
+    WHERE w.venue_id = ? AND e.created_at >= ? AND e.created_at < ? AND e.type IN ('rating','google_click')
+    ORDER BY e.id DESC LIMIT 40`).all(req.venueId, from, to);
+  const daily = db.prepare(`SELECT date(e.created_at) AS day, COUNT(*) AS n, AVG(e.stars) AS avg
+    FROM events e JOIN waiters w ON w.id = e.waiter_id
+    WHERE w.venue_id = ? AND e.type = 'rating' AND e.created_at >= ? AND e.created_at < ?
+    GROUP BY day ORDER BY day`).all(req.venueId, from, to);
+  const venue = db.prepare('SELECT id, name, slug, login FROM venues WHERE id = ?').get(req.venueId);
+  res.json({ from, to, settings: getSettings(req.venueId), waiters, feed, daily, base: baseUrl(req), venue, master: req.who.role === 'master' });
 });
 
 app.post('/api/admin/waiters', (req, res) => {
@@ -325,33 +415,77 @@ app.post('/api/admin/waiters', (req, res) => {
   let slug = slugify(name), i = 1;
   while (db.prepare('SELECT 1 FROM waiters WHERE slug = ?').get(slug)) slug = `${slugify(name)}-${++i}`;
   const token = crypto.randomBytes(12).toString('hex');
-  const r = db.prepare('INSERT INTO waiters (name, slug, token) VALUES (?, ?, ?)').run(name, slug, token);
-  broadcast({ type: 'refresh' });
+  const r = db.prepare('INSERT INTO waiters (name, slug, token, venue_id) VALUES (?, ?, ?, ?)').run(name, slug, token, req.venueId);
+  broadcast({ type: 'refresh' }, req.venueId);
   res.json({ id: Number(r.lastInsertRowid), name, slug, token });
 });
 
 app.patch('/api/admin/waiters/:id', (req, res) => {
   const { name, active } = req.body || {};
-  if (name !== undefined) db.prepare('UPDATE waiters SET name = ? WHERE id = ?').run(String(name).trim().slice(0, 60), Number(req.params.id));
-  if (active !== undefined) db.prepare('UPDATE waiters SET active = ? WHERE id = ?').run(active ? 1 : 0, Number(req.params.id));
-  broadcast({ type: 'refresh' });
+  const id = Number(req.params.id);
+  if (name !== undefined) db.prepare('UPDATE waiters SET name = ? WHERE id = ? AND venue_id = ?').run(String(name).trim().slice(0, 60), id, req.venueId);
+  if (active !== undefined) db.prepare('UPDATE waiters SET active = ? WHERE id = ? AND venue_id = ?').run(active ? 1 : 0, id, req.venueId);
+  broadcast({ type: 'refresh' }, req.venueId);
   res.json({ ok: true });
 });
 
 app.put('/api/admin/settings', (req, res) => {
-  const stmt = db.prepare('UPDATE settings SET value = ? WHERE key = ?');
-  for (const k of Object.keys(DEFAULT_SETTINGS)) if (req.body?.[k] !== undefined) stmt.run(String(req.body[k]).trim(), k);
-  broadcast({ type: 'refresh' });
-  res.json(getSettings());
+  setSettings(req.venueId, req.body || {});
+  broadcast({ type: 'refresh' }, req.venueId);
+  res.json(getSettings(req.venueId));
 });
 
 app.get('/api/admin/export.csv', (req, res) => {
   const [from, to] = rangeFromQuery(req.query);
-  const rows = computeStats(from, to);
+  const rows = computeStats(req.venueId, from, to);
+  const venue = db.prepare('SELECT slug FROM venues WHERE id = ?').get(req.venueId);
   const csv = ['Camarero;Escaneos;Valoraciones;5★;4★;3★;2★;1★;Media;Clics Google;Bonus €']
     .concat(rows.map((r) => [r.name, r.scans, r.ratings, r.stars[5], r.stars[4], r.stars[3], r.stars[2], r.stars[1], r.avg ?? '', r.google_clicks, r.bonus.toFixed(2).replace('.', ',')].join(';')))
     .join('\n');
-  res.type('text/csv; charset=utf-8').attachment('topreview-informe.csv').send('﻿' + csv);
+  res.type('text/csv; charset=utf-8').attachment(`topreview-${venue.slug}.csv`).send('﻿' + csv);
+});
+
+
+// ---- Panel maestro: alta y gestión de locales ----
+app.use(['/master', '/api/master'], requireMaster);
+app.get('/master', (req, res) => res.sendFile(path.join(__dirname, 'public', 'master.html')));
+
+app.get('/api/master/venues', (req, res) => {
+  const [from, to] = rangeFromQuery({ period: 'month' });
+  const venues = db.prepare('SELECT id, name, slug, login, active, created_at FROM venues ORDER BY active DESC, id').all().map((v) => {
+    const st = computeStats(v.id, from, to);
+    const ratings = st.reduce((a, x) => a + x.ratings, 0);
+    const stars = st.reduce((a, x) => a + [1, 2, 3, 4, 5].reduce((b, n) => b + n * x.stars[n], 0), 0);
+    const s = getSettings(v.id);
+    return { ...v, active: !!v.active, waiters: st.filter((x) => x.active).length, ratings,
+      avg: ratings ? Math.round((stars / ratings) * 100) / 100 : null,
+      google_clicks: st.reduce((a, x) => a + x.google_clicks, 0),
+      bonus: Math.round(st.reduce((a, x) => a + x.bonus, 0) * 100) / 100,
+      has_google: !!s.google_review_url };
+  });
+  res.json({ venues, base: baseUrl(req) });
+});
+
+app.post('/api/master/venues', (req, res) => {
+  const name = String(req.body?.name || '').trim().slice(0, 80);
+  if (!name) return res.status(400).json({ error: 'Nombre obligatorio' });
+  const login = String(req.body?.login || '').trim().slice(0, 40);
+  const google = String(req.body?.google_review_url || '').trim().slice(0, 500);
+  res.json(createVenue(name, { login, google_review_url: google }));
+});
+
+app.post('/api/master/venues/:id/password', (req, res) => {
+  const v = db.prepare('SELECT id, login FROM venues WHERE id = ?').get(Number(req.params.id));
+  if (!v) return res.sendStatus(404);
+  const password = newPassword();
+  db.prepare('UPDATE venues SET pass_hash = ? WHERE id = ?').run(hashPass(password), v.id);
+  res.json({ login: v.login, password });
+});
+
+app.patch('/api/master/venues/:id', (req, res) => {
+  const id = Number(req.params.id);
+  if (req.body?.active !== undefined) db.prepare('UPDATE venues SET active = ? WHERE id = ?').run(req.body.active ? 1 : 0, id);
+  res.json({ ok: true });
 });
 
 // Portada pública para explicar TopReview a los camareros
@@ -359,7 +493,9 @@ const landing = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'u
 app.get('/', (req, res) => res.send(`<!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>${landing}</body></html>`));
 app.get('/api/public/info', (req, res) => {
-  const s = getSettings();
+  const v = db.prepare('SELECT id FROM venues WHERE slug = ? AND active = 1').get(String(req.query.local || ''))
+    || db.prepare('SELECT id FROM venues WHERE active = 1 ORDER BY id LIMIT 1').get();
+  const s = v ? getSettings(v.id) : DEFAULT_SETTINGS;
   res.set('Access-Control-Allow-Origin', '*'); // la web de camareros en GitHub Pages lee estos datos
   res.json({ business_name: s.business_name, bonus_5: s.bonus_5, bonus_4: s.bonus_4, bonus_3: s.bonus_3, bonus_2: s.bonus_2, bonus_1: s.bonus_1 });
 });
