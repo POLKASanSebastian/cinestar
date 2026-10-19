@@ -76,7 +76,7 @@
 <header>
   <div class="brand">Top<span>Review</span></div>
   <div class="venue" id="venueName"></div>
-  <a class="back" id="back" href="/master" hidden>← Todos los locales</a>
+  <a class="back" id="back" href="/portal" hidden>← Mis locales</a>
   <div class="live"><span class="dot" id="dot"></span><span id="liveTxt">En directo</span></div>
   <div class="sp"></div>
   <select id="period">
@@ -86,6 +86,7 @@
     <option value="all">Todo</option>
   </select>
   <a id="csv" class="btn light" style="text-decoration:none">Exportar CSV</a>
+  <a class="back" href="/logout">Salir</a>
 </header>
 <main>
   <div class="warn" id="warnGoogle" hidden>⚠️ Falta el enlace de reseñas de Google. Configúralo abajo en <b>Ajustes</b> para que los clientes lleguen a tu ficha.</div>
@@ -155,6 +156,9 @@ const eur = (n) => n.toLocaleString('es-ES', { style:'currency', currency:'EUR' 
 let base = location.origin, seen = new Set(), first = true;
 const V = new URLSearchParams(location.search).get('v');
 // Con el acceso maestro, cada llamada lleva el local que se está viendo (?v=)
+// Si la sesión caduca, vuelve a la pantalla de acceso
+const _fetch = window.fetch.bind(window);
+window.fetch = async (...a) => { const r = await _fetch(...a); if (r.status === 401) location.href = '/login?next=' + encodeURIComponent(location.pathname + location.search); return r; };
 const api = (p) => V ? p + (p.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(V) : p;
 
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
@@ -165,7 +169,7 @@ async function load() {
   const d = await fetch(api('/api/admin/stats?period=' + period)).then(r => r.json());
   $('venueName').textContent = d.venue?.name || '';
   document.title = (d.venue?.name ? d.venue.name + ' · ' : '') + 'TopReview';
-  $('back').hidden = !d.master;
+  $('back').hidden = !d.fromPortal;
   base = d.base;
   render(d);
   if (first) fillSettings(d.settings);
