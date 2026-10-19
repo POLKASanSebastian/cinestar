@@ -1,4 +1,4 @@
-<title>CineStar Demo</title>
+<title>TopReview Demo</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=DM+Sans:wght@400;500;700&display=swap">
@@ -115,7 +115,7 @@
 
 <header>
   <div class="hwrap">
-    <div class="brand">Cine<span>Star</span></div>
+    <div class="brand">Top<span>Review</span></div>
     <span class="tag">Demo interactiva · datos de ejemplo</span>
     <div class="live"><span class="dot"></span>En directo</div>
   </div>
@@ -267,7 +267,7 @@ function renderPick() {
   try { const q = qrcode(0, 'M'); q.addData(url); q.make(); $('qr').innerHTML = q.createImgTag(4, 0); } catch { $('qr').textContent = 'QR'; }
 }
 
-const head = () => `<div class="brand">Cine<span>Star</span></div><div class="biz">${BIZ}</div>`;
+const head = () => `<div class="brand">Top<span>Review</span></div><div class="biz">${BIZ}</div>`;
 function scan() {
   const w = waiters[current];
   newId = null; log(current, 'scan'); renderDash();
