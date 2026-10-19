@@ -5,18 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>TopReview · Dashboard</title>
 <style>
-  :root { --bg:#f5f6fa; --panel:#fff; --ink:#0f172a; --muted:#64748b; --line:#e5e7eb; --brand:#6d28d9; --gold:#f5b301; --good:#16a34a; --bad:#dc2626; }
+  :root { --bg:#f7f1e3; --panel:#fff; --ink:#0b1f3a; --muted:#4b5a73; --line:#e3d9c4; --brand:#002fa7; --gold:#f2b705; --good:#16824a; --bad:#c92a42; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--ink); }
-  header { background:#0f172a; color:#fff; padding:14px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-  .brand { font-weight:900; font-size:22px; } .brand span { color:var(--gold); }
+  header { background:#0b1f3a; color:#fff; padding:14px 20px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .brand { font-weight:900; font-size:22px; } .brand span { color:#9fb4ee; }
+  .venue { font-weight:700; font-size:15px; color:#fff; padding-left:12px; border-left:1px solid #2c4166; }
+  .back { color:#c9d3e6; font-size:13px; text-decoration:none; border:1px solid #2c4166; border-radius:8px; padding:5px 10px; }
+  .back:hover { color:#fff; border-color:#9fb4ee; }
   .live { font-size:12px; display:flex; align-items:center; gap:6px; color:#a7f3d0; }
   .dot { width:8px; height:8px; border-radius:50%; background:#22c55e; box-shadow:0 0 0 0 #22c55e; animation:pulse 1.6s infinite; }
   .dot.off { background:#ef4444; animation:none; }
   @keyframes pulse { 70% { box-shadow:0 0 0 8px transparent; } }
   header .sp { flex:1; }
   select, input, button { font:inherit; }
-  header select { background:#1e293b; color:#fff; border:1px solid #334155; border-radius:8px; padding:6px 10px; }
+  header select { background:#132a4d; color:#fff; border:1px solid #2c4166; border-radius:8px; padding:6px 10px; }
   main { max-width:1200px; margin:0 auto; padding:20px 16px 60px; }
   .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:18px; }
   .kpi { background:var(--panel); border-radius:14px; padding:14px 16px; border:1px solid var(--line); }
@@ -54,7 +57,7 @@
   form.row input { flex:1; min-width:160px; }
   input[type=text], input[type=url], input[type=number] { border:1px solid #cbd5e1; border-radius:10px; padding:9px 12px; width:100%; }
   .btn { background:var(--brand); color:#fff; border:0; border-radius:10px; padding:9px 16px; font-weight:700; cursor:pointer; }
-  .btn.light { background:#eef2ff; color:var(--brand); }
+  .btn.light { background:#e6ecfa; color:var(--brand); }
   .settings { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .settings label { font-size:13px; color:var(--muted); display:block; }
   .settings .full { grid-column:1/-1; }
@@ -63,15 +66,17 @@
   .note { font-size:12px; color:var(--muted); margin:6px 0 0; }
   .warn { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:10px 12px; border-radius:10px; font-size:14px; margin-bottom:16px; }
   .chart { display:flex; align-items:flex-end; gap:3px; height:90px; margin-top:6px; }
-  .chart div { flex:1; max-width:40px; background:#c4b5fd; border-radius:4px 4px 0 0; min-height:2px; position:relative; }
+  .chart div { flex:1; max-width:40px; background:#b8c7f0; border-radius:4px 4px 0 0; min-height:2px; position:relative; }
   .chart div:hover { background:var(--brand); }
-  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#0f172a; color:#fff; padding:10px 16px; border-radius:10px; font-size:14px; opacity:0; transition:.3s; pointer-events:none; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#0b1f3a; color:#fff; padding:10px 16px; border-radius:10px; font-size:14px; opacity:0; transition:.3s; pointer-events:none; }
   .toast.show { opacity:1; }
 </style>
 </head>
 <body>
 <header>
   <div class="brand">Top<span>Review</span></div>
+  <div class="venue" id="venueName"></div>
+  <a class="back" id="back" href="/master" hidden>← Todos los locales</a>
   <div class="live"><span class="dot" id="dot"></span><span id="liveTxt">En directo</span></div>
   <div class="sp"></div>
   <select id="period">
@@ -148,13 +153,19 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const eur = (n) => n.toLocaleString('es-ES', { style:'currency', currency:'EUR' });
 let base = location.origin, seen = new Set(), first = true;
+const V = new URLSearchParams(location.search).get('v');
+// Con el acceso maestro, cada llamada lleva el local que se está viendo (?v=)
+const api = (p) => V ? p + (p.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(V) : p;
 
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
 
 async function load() {
   const period = $('period').value;
-  $('csv').href = '/api/admin/export.csv?period=' + period;
-  const d = await fetch('/api/admin/stats?period=' + period).then(r => r.json());
+  $('csv').href = api('/api/admin/export.csv?period=' + period);
+  const d = await fetch(api('/api/admin/stats?period=' + period)).then(r => r.json());
+  $('venueName').textContent = d.venue?.name || '';
+  document.title = (d.venue?.name ? d.venue.name + ' · ' : '') + 'TopReview';
+  $('back').hidden = !d.master;
   base = d.base;
   render(d);
   if (first) fillSettings(d.settings);
@@ -187,7 +198,7 @@ function render(d) {
       <td>${x.google_clicks}</td>
       <td class="money">${eur(x.bonus)}</td>
       <td class="actions">
-        <a href="/admin/card/${x.id}" target="_blank">🖨️ QR</a>
+        <a href="${api('/admin/card/' + x.id)}" target="_blank">🖨️ QR</a>
         <button onclick="copy('${base}/me/${x.token}')">🔗 Su panel</button>
         <button onclick="toggle(${x.id}, ${!x.active})">${x.active ? 'Desactivar' : 'Activar'}</button>
       </td></tr>`;
@@ -213,21 +224,21 @@ async function copy(url) {
   catch { prompt('Copia este enlace:', url); }
 }
 async function toggle(id, active) {
-  await fetch('/api/admin/waiters/' + id, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ active }) });
+  await fetch(api('/api/admin/waiters/' + id), { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ active }) });
 }
 
 $('addForm').onsubmit = async (e) => {
   e.preventDefault();
   const name = $('newName').value.trim(); if (!name) return;
-  const r = await fetch('/api/admin/waiters', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name }) }).then(r => r.json());
+  const r = await fetch(api('/api/admin/waiters'), { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name }) }).then(r => r.json());
   $('newName').value = '';
   toast(`${r.name} dado de alta ✅`);
-  window.open('/admin/card/' + r.id, '_blank');
+  window.open(api('/admin/card/' + r.id), '_blank');
 };
 $('settingsForm').onsubmit = async (e) => {
   e.preventDefault();
   const body = Object.fromEntries(new FormData(e.target));
-  await fetch('/api/admin/settings', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  await fetch(api('/api/admin/settings'), { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
   toast('Ajustes guardados');
 };
 $('period').onchange = load;
@@ -235,7 +246,7 @@ $('period').onchange = load;
 // Tiempo real
 let timer;
 function connect() {
-  const es = new EventSource('/api/admin/stream');
+  const es = new EventSource(api('/api/admin/stream'));
   es.onopen = () => { $('dot').classList.remove('off'); $('liveTxt').textContent = 'En directo'; };
   es.onerror = () => { $('dot').classList.add('off'); $('liveTxt').textContent = 'Reconectando…'; };
   es.onmessage = (m) => {
